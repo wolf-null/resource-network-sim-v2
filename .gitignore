@@ -5,3 +5,4 @@
 .idea/modules.xml
 .idea/resource-network-sim-v2.iml
 .idea/vcs.xml
+*.pyc
