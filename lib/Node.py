@@ -29,6 +29,16 @@ class Node:
     def reverse_connections(self):
         return self.__reverse_connections
 
+    def get_connections(self):
+        return self.__connections, self.__reverse_connections
+
+    def set_connections(self, connections, rev_connections):
+        self.__connections = connections
+        self.__reverse_connections = rev_connections
+
+    def connection_count(self):
+        return len(self.__connections), len(self.__reverse_connections)
+
     def connect_to_node(self, node):
         if node.index in self.__connections:
             return False
