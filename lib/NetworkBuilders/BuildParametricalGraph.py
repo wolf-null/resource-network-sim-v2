@@ -24,15 +24,21 @@ class BuildParametricalGraph(NetworkBuilder):
         and passes back to build() procedure (returns the net)
     """
 
-    def __init__(self, previous=None):
+    def __init__(self, previous=None, structure=dict(), goal_error=0):
         super(BuildParametricalGraph, self).__init__(previous)
+
+        # Init
         self._structure = dict()
         self._saturation = list()
         self._desaturation = list()
         self._actual = list()
         self._n = 0
-        self._m = 0
-        self._goal_error = 0
+
+        # Process inputs
+        self._norm_structure = structure.copy()
+        self._goal_error = goal_error
+        if not isinstance(structure, dict):
+            raise GeneralError_WrongInput("building_operations shall receive (node_amount, {link_amount:quantity, ...})")
 
     def _pre_building(self):
         """Attention: bad code"""
@@ -67,7 +73,7 @@ class BuildParametricalGraph(NetworkBuilder):
             print("desat={0} -> reset".format(desat))
             self._host.reset_nodes()
 
-    def building_operations(self, n=tuple):
+    def building_operations(self, n=0):
         """
         :param n: - the structure of the network. See BuildParametricalGraph class desc.
         """
@@ -75,22 +81,15 @@ class BuildParametricalGraph(NetworkBuilder):
         self._host.set_is_rising_connection_errors(False)
 
         # Process inputs
-        if not isinstance(n[1], dict):
-            raise GeneralError_WrongInput("building_operations shall receive (node_amount, {link_amount:quantity, ...})")
-        self._n = n[0]
-        norm_structure = n[1].copy()
-        for key in norm_structure:
-            norm_structure[key] = int(norm_structure[key] * self._n)
-        rounding_error = max(0, self._n - int(sum(norm_structure.values())))
-        for k in range(rounding_error):
-            keys = list(norm_structure.keys())
-            norm_structure[rnd.choice(keys)] += 1
-        self._structure = norm_structure
+        self._n = n
 
-        if len(n) == 3:
-            self._goal_error = n[2]
-        else:
-            self._goal_error = 0
+        for key in self._norm_structure:
+            self._norm_structure[key] = int(self._norm_structure[key] * self._n)
+        rounding_error = max(0, self._n - int(sum(self._norm_structure.values())))
+        for k in range(rounding_error):
+            keys = list(self._norm_structure.keys())
+            self._norm_structure[rnd.choice(keys)] += 1
+        self._structure = self._norm_structure
 
         for sat in self._structure.keys():
             amount = self._structure[sat]

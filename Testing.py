@@ -6,7 +6,9 @@ from lib.NetworkBuilders.BuildParametricalGraph import BuildParametricalGraph
 
 nodes = 1000
 goal = {2:0.2, 3:0.2, 4:0.6}
-host = BuildParametricalGraph().build([nodes, goal, 1])
+
+host = DropoutDesaturate(BuildParametricalGraph(structure=goal, goal_error=1), dropout=0).build(nodes)
+
 result = host.graph_statistics_dict()
 for k in result:
     result[k] = result[k] / nodes
