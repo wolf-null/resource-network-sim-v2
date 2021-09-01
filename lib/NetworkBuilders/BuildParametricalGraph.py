@@ -10,6 +10,20 @@ import random as rnd
 
 
 class BuildParametricalGraph(NetworkBuilder):
+    """
+        Generates network with <amount_of_nodes> with defined <interconnection_structure>,
+        where not more than <goal_error> nodes are out of the structure (see below)
+        If <goal_error> is unspecified it is set to 0
+
+        <interconnection_structure> have form of a dict {link_amount:prob, link_amount:prob, ...},
+        where <link_amount> is a number of connection and <prob> is the probability of it's emerging in the net
+
+        After the generation phase (encapsulated for user, but may long for indefinite time - not solved yet),
+        The algorithm checks total_error = |k'th_node_connections - k'th_node_expected_connections| and if
+        total_error <= <goal_error> it stops the generation process
+        and passes back to build() procedure (returns the net)
+    """
+
     def __init__(self, previous=None):
         super(BuildParametricalGraph, self).__init__(previous)
         self._structure = dict()
@@ -20,8 +34,8 @@ class BuildParametricalGraph(NetworkBuilder):
         self._m = 0
         self._goal_error = 0
 
-    def pre_buiilding(self):
-        """Attention: govnocode"""
+    def _pre_building(self):
+        """Attention: bad code"""
         while True:
             self._host.add_nodes([Node() for k in range(self._n)])
             while True:
@@ -54,7 +68,9 @@ class BuildParametricalGraph(NetworkBuilder):
             self._host.reset_nodes()
 
     def building_operations(self, n=tuple):
-        # Input: amount of nodes + link structure [{link_amount : quantity, ...} like (nodes, {...})
+        """
+        :param n: - the structure of the network. See BuildParametricalGraph class desc.
+        """
         rcr = self._host.is_rising_connection_errors()
         self._host.set_is_rising_connection_errors(False)
 
@@ -82,7 +98,11 @@ class BuildParametricalGraph(NetworkBuilder):
         self._saturation = sorted(self._saturation, reverse=True)
         self._actual = [0 for k in range(len(self._saturation))]
 
-        self.pre_buiilding()
+        # Start pre-building
+        self._pre_building()
 
         self._host.set_is_rising_connection_errors(rcr)
+
+        # Return back only the number of nodes:
+        n = self._n
 

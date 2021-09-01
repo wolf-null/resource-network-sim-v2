@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 
 
 class NetworkBuilder:
+    """
+    The base network builder class.
+    """
+
     def __init__(self, previous=None):
         self._previous_builder = previous
         self._host = Host()
