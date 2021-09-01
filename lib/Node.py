@@ -30,7 +30,7 @@ class Node:
         return self.__reverse_connections
 
     def get_connections(self):
-        return self.__connections, self.__reverse_connections
+        return self.__connections.copy(), self.__reverse_connections.copy()
 
     def set_connections(self, connections, rev_connections):
         self.__connections = connections
