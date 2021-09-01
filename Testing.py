@@ -33,4 +33,14 @@ print(host.check_connectivity())
 
 # host = BuildParametricalGraph().build( [6, {1:1, 2:4, 3:0, 4:0, 5:1}])
 # host = BuildParametricalGraph().build( [11, {1:6, 2:3, 3:1, 4:0, 5:1}])
-host = BuildParametricalGraph().build( [8, {1:4, 2:0, 3:4}])
+
+nodes = 100
+goal = {2:0.333, 3:0.333, 4:0.333}
+host = BuildParametricalGraph().build([nodes, goal])
+result = host.graph_statistics_dict()
+for k in result:
+    result[k] = result[k] / nodes
+
+host.print_data()
+print("\nGoal: ", goal)
+print("\nResult: ", result)

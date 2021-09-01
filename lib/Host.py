@@ -38,6 +38,10 @@ class Host:
         self._rack = list()
         self._rising_connection_errors = True
 
+    def reset_nodes(self):
+        self.size = 0
+        self._nodes.clear()
+
     def is_rising_connection_errors(self):
         return self._rising_connection_errors
 
@@ -74,8 +78,12 @@ class Host:
         bra = self._nodes[node_b].reverse_connect_to(node_a)
         bsa = self._nodes[node_b].connect_to(node_a)
         arb = self._nodes[node_a].reverse_connect_to(node_b)
-        if self._rising_connection_errors and not (asb and bra and bsa and arb):
-            raise HostError_Connection(str("{0} and {1} are already connected\nCheck: {2},{3},{4},{5}").format(node_a, node_b, asb, bra, bsa, arb))
+        if not (asb and bra and bsa and arb):
+            if self._rising_connection_errors:
+                raise HostError_Connection(str("{0} and {1} are already connected\nCheck: {2},{3},{4},{5}").format(node_a, node_b, asb, bra, bsa, arb))
+            else:
+                return False
+        return True
 
     def connect_both_ways_n(self, pairs):
         for a, b in pairs:
@@ -142,3 +150,20 @@ class Host:
             stats[connections] += 1
         return stats
 
+    def save_structure(self):
+        nodes = [node.index for node in self._nodes]
+        links = list()
+        for src in self._nodes:
+            for dst in src.get_connections()[0]:
+                links += [[src.index, dst], ]
+        return nodes, links
+
+    def load_structure(self, nodes, links):
+        self._nodes.clear()
+        for node in nodes:
+            new_node = Node()
+            self.add_node(Node())
+            new_node.index = node
+
+        self.connect_n(links)
+        self.size = len(nodes)
