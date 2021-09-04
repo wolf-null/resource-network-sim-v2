@@ -4,7 +4,7 @@ from lib.NetworkBuilders.BuildCompleteGraph import BuildCompleteGraph
 from lib.NetworkBuilders.DropoutLimited import DropoutLimited
 from lib.NetworkBuilders.BuildParametricalGraph import BuildParametricalGraph
 
-nodes = 50
+nodes = 1000
 goal = {2:0.2, 3:0.2, 4:0.6}
 
 host = DropoutLimited(BuildParametricalGraph(structure=goal, goal_error=1), dropout=0.5).build(nodes)
