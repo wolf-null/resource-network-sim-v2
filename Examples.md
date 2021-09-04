@@ -87,9 +87,9 @@ goal = {2:0.2, 3:0.2, 4:0.6}
 # Will work right the same way as the output of Host.graph_statistics_dict()
 
 network_generator = BuildParametricalGraph(structure=goal, goal_error=1)
-""" One can't always generate the node completely identical to the parameters given.
-    Can't always make all nodes to have the exact number of links, some of them
-    might have lesser links. The <goal_error> parameter shows acceptable lack of links in the net """
+#   One can't always generate the node completely identical to the parameters given.
+#   Can't always make all nodes to have the exact number of links, some of them
+#   might have lesser links. The <goal_error> parameter shows acceptable lack of links in the net """
 
 n_nodes = 1000
 network = network_generator.build(n_nodes)
