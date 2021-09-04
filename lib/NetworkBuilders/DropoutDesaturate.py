@@ -1,7 +1,7 @@
 from lib.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
 from lib.Host import Host
-from random import choices
+from random import sample
 
 
 class DropoutDesaturate(NetworkBuilder):
@@ -18,7 +18,7 @@ class DropoutDesaturate(NetworkBuilder):
         for node_index in range(self._host.size):
             node = self._host.get_node(node_index)
             connections = node.connections()
-            connections_to_delete = choices(connections, k=int(len(connections) * self._dropout))
+            connections_to_delete = sample(connections, k=int(len(connections) * self._dropout))
             disconnections += [[node_index, node_b] for node_b in connections_to_delete]
 
         self._host.disconnect_n(disconnections)

@@ -1,3 +1,4 @@
+# GENERAL ERROR TYPES -----------------------------------------------------------------------------
 class GeneralError(BaseException):
     pass
 
@@ -6,6 +7,11 @@ class GeneralError_WrongInput(GeneralError):
     pass
 
 
+class GeneralError_NotCallable(GeneralError):
+    pass
+
+
+# HOST ERROR TYPES ---------------------------------------------------------------------------------
 class HostError(BaseException):
     pass
 
@@ -20,4 +26,3 @@ class HostError_Connection(HostError):
 
 class HostError_CompletenessViolated(HostError):
     pass
-

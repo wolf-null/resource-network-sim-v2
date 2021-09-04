@@ -1,38 +1,101 @@
 import math
+from abc import abstractmethod
 
 from lib.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
 from lib.Host import Host
 from lib.Host import dict_sum, dict_by_number, dict_add_number
 import random as rnd
-from lib.Errors import GeneralError_WrongInput, HostError_CompletenessViolated
+from lib.Errors import GeneralError_WrongInput, HostError_CompletenessViolated, GeneralError_NotCallable
 import random as rnd
+
+
+class NetworkConsistency:
+    """Class which allows to init network with different types (subclasses) of <Node> class"""
+
+    def __init__(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def pick_a_node(self, **kwargs):
+        pass
+
+
+class DefaultNetworkConsistency(NetworkConsistency):
+    def __init__(self, **kwargs):
+        super(DefaultNetworkConsistency, self).__init__(**kwargs)
+
+    def pick_a_node(self, **kwargs):
+        return Node()
+
+
+class RandomNetworkConsistency(NetworkConsistency):
+    def __init__(self, distribution=dict(), node_initializer=dict(), **kwargs):
+        """
+        :param distribution:        dict {Node or subclass : weight}
+                                    - Caution: pass subclasses without braces, e.g. RandomNetworkConsistency({Node:10, BigNode:1})
+
+        :param node_initializer:    dict {Node or subclass : initfunc(node_type as <Node subclass>, n as <integer>) }
+                                    - initfunc() returns arguments **kwargs for a particular Subclass of Node root class,
+                                    which is put into it's __init__(...) as the arguments.
+
+                                    initfunc() shall return a dict of **kwargs in form {argument:value}
+
+                                    This is a pretty insecure but also a very flexible code maneuver.
+                                    Use with caution.
+
+        """
+        super(RandomNetworkConsistency, self).__init__(**kwargs)
+        self._distribution = distribution
+        self._initializer = node_initializer
+        self._picked_nodes = dict()
+        for key in list(distribution.keys()):
+            self._picked_nodes[key] = 0
+
+    def pick_a_node(self, **kwargs):
+        chosen_node_type = rnd.choices(
+            list(self._distribution.keys()),
+            weights=list(self._distribution.values()),
+            k=1
+        )
+
+        self._picked_nodes[chosen_node_type] += 1
+
+        if chosen_node_type in self._initializer:
+            if callable(self._initializer[chosen_node_type]):
+                # Attention: Satanic code!
+                return chosen_node_type(**self._initializer[chosen_node_type](n=self._picked_nodes[chosen_node_type]-1, node_type=chosen_node_type, order=kwargs['order'] if 'order' in kwargs else None))
+            else:
+                raise GeneralError_NotCallable(str("Given initializer {0} isn't a callable object! Initializer with key of <Node> type shall be a function with arguments <n> and [<node_type>]").format(self._initializer[chosen_node_type]))
+        else:
+            return chosen_node_type()
 
 
 class BuildParametricalGraph(NetworkBuilder):
     """
-        Generates network with <amount_of_nodes> with defined <interconnection_structure>,
-        where not more than <goal_error> nodes are out of the structure (see below)
-        If <goal_error> is unspecified it is set to 0
+        Generates network with amount_of_nodes with defined interconnection_structure,
+        where not more than goal_error nodes are out of the structure (see below)
+        If goal_error is unspecified it is set to 0
 
-        <interconnection_structure> have form of a dict {link_amount:prob, link_amount:prob, ...},
-        where <link_amount> is a number of connection and <prob> is the probability of it's emerging in the net
+        interconnection_structure have form of a dict: {link_amount:prob, link_amount:prob, ...},
+        where link_amount is a number of connection and prob is the probability of it's emerging in the net
 
         After the generation phase (encapsulated for user, but may long for indefinite time - not solved yet),
         The algorithm checks total_error = |k'th_node_connections - k'th_node_expected_connections| and if
-        total_error <= <goal_error> it stops the generation process
+        total_error <= goal_error it stops the generation process
         and passes back to build() procedure (returns the net)
     """
 
-    def __init__(self, previous=None, structure=dict(), goal_error=0):
+    def __init__(self, previous=None, structure=dict(), goal_error=0, consistency=DefaultNetworkConsistency()):
         super(BuildParametricalGraph, self).__init__(previous)
 
         # Init
-        self._structure = dict()
+        self._structure = structure
         self._saturation = list()
         self._desaturation = list()
         self._actual = list()
         self._n = 0
+        self._consistency = consistency
 
         # Process inputs
         self._norm_structure = structure.copy()
@@ -43,7 +106,7 @@ class BuildParametricalGraph(NetworkBuilder):
     def _pre_building(self):
         """Attention: bad code"""
         while True:
-            self._host.add_nodes([Node() for k in range(self._n)])
+            self._host.add_nodes([self._consistency.pick_a_node(order=self._saturation[k]) for k in range(self._n)])
             while True:
                 changes_made = False
                 desaturated = list(filter(lambda node: self._actual[node] < self._saturation[node], range(self._n)))

@@ -1,5 +1,5 @@
 class Node:
-    def __init__(self, index=-1, initial_wealth=0):
+    def __init__(self, index=-1, initial_wealth=0, **kwargs):
         self.index = index
         self.__connections = list()
         self.__reverse_connections = list()
@@ -19,6 +19,9 @@ class Node:
 
     def __contains__(self, item):
         return item in self._data
+
+    def set_host(self, host=None):
+        self._host = host
 
     def set(self, key, value):
         self._data[key] = value
@@ -109,6 +112,9 @@ class Node:
 
         self._blocked = False
         return True
+
+    def send_wealth(self, dst, amount):
+        self._host.send_wealth_to(self, dst, amount)
 
     def exec(self):
         """

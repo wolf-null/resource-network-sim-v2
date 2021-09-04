@@ -55,6 +55,7 @@ class Host:
         if not isinstance(node, Node):
             raise HostError_NotANode('Added node should be inherited from Node class (see Node.py)')
         node.index = len(self._nodes)
+        node.set_host(self)
         self._nodes.append(node)
         self.size += 1
         return node.index
@@ -167,3 +168,6 @@ class Host:
 
         self.connect_n(links)
         self.size = len(nodes)
+
+    def send_wealth_to(self, src, dst, amount):
+        self._nodes[dst].stack_wealth(src, dst, amount)
