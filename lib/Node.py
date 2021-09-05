@@ -1,11 +1,15 @@
+import threading
+
+
 class Node:
     def __init__(self, index=-1, initial_wealth=0, **kwargs):
         self.index = index
         self.__connections = list()
         self.__reverse_connections = list()
-        self._input_buffer = list()
+        self.my_input_buffer = list()
         self._data = {'wealth': initial_wealth}
-        self._blocked = False
+        self._stack_locker = threading.Lock()
+        self._receiver_locker = threading.Lock()
         self._host = None
 
     def get(self, key, default_value=None):
@@ -17,8 +21,21 @@ class Node:
             return self._data[key]
         return default_value
 
+    def check_condition(self, func):
+        if func(self._data):
+            return True
+        return False
+
     def __contains__(self, item):
         return item in self._data
+
+    def copy(self):
+        result = (type(self))(self.index)
+        result.__connections = self.__connections.copy()
+        result.__reverse_connections = self.__reverse_connections.copy()
+        result.my_input_buffer = self.my_input_buffer.copy()
+        result._data = self._data.copy()
+        return result
 
     def set_host(self, host=None):
         self._host = host
@@ -104,14 +121,20 @@ class Node:
         while not node.stack_wealth(...):
             pass
         """
-        if self._blocked:
-            return False
-        self._blocked = True
-
-        self._input_buffer.append((src, dst, amount))  # Thread-unsafe append function!
-
-        self._blocked = False
+        self._stack_locker.acquire()
+        self.my_input_buffer.append((src, dst, amount))
+        self._stack_locker.release()
         return True
+
+    def receive_stack_wealth(self, number_or_records=-1):
+        self._stack_locker.acquire()
+        if number_or_records != -1:
+            result = self.my_input_buffer[0:number_or_records]
+        else:
+            result = self.my_input_buffer.copy()
+        self.my_input_buffer = self.my_input_buffer[number_or_records:-1]
+        self._stack_locker.release()
+        return result
 
     def send_wealth(self, dst, amount):
         self._host.send_wealth_to(self, dst, amount)
@@ -119,6 +142,7 @@ class Node:
     def exec(self):
         """
         The way of cleaning input stack is also determined by inheritors
+        Use receive_stack_wealth when exec() starts and
         """
         pass
 

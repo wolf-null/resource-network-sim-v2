@@ -21,6 +21,7 @@ class DropoutLimited(NetworkBuilder):
         self._dropout = dropout
 
     def building_operations(self, n=0):
+        print('[DropoutLimited]: Start')
         initial_link_amounts = [self._host.get_node(k).connection_count()[0] for k in range(self._host.size)]
         forbidden = list()  # List of connection breaking of which violates network's connectivity (completeness)
         finalized_nodes = list()  # List of nodes as dropouted as possible
@@ -56,9 +57,9 @@ class DropoutLimited(NetworkBuilder):
                     self._host.connect_both_ways(node, disconnect_from)
                 links_dropped += 1
 
-        print(str("[DropoutLimited]: {0} links dropped, which is {1}% of initial value. The goal was {2}%").format(
+        print(str("\r[DropoutLimited]: {0} links dropped, which is {1}% of initial value. The goal was {2}%").format(
             links_dropped,
             round(100*2*links_dropped/sum(initial_link_amounts),3),
-            round(100 * self._dropout, 3)
-        ))
+            round(100 * (1-self._dropout), 3)
+        ), end='')
 

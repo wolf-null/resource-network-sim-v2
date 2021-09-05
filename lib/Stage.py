@@ -2,8 +2,8 @@ from lib.Host import Host
 
 
 class Stage:
-    def __init__(self, name=str(), enabled=True):
-        self._host = None
+    def __init__(self, host=Host(), name=str(), enabled=True):
+        self._host = host
         self._enabled = enabled
         self.name = name
 

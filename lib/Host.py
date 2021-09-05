@@ -26,12 +26,14 @@ def dict_add_number(a=dict(), number=int()):
     return result
 
 
-
 class Host:
     """
     Host class implements basic node management functions like adding, connecting, connectivity check
     Host class doesn't implement execution functions and other pipeline functional. For this see StageHost
     """
+    class IgnoreNoValues:
+        pass
+
     def __init__(self):
         self.size = 0
         self._nodes = list()
@@ -41,6 +43,15 @@ class Host:
     def reset_nodes(self):
         self.size = 0
         self._nodes.clear()
+
+    def copy(self):
+        result = Host()
+        for node in self._nodes:
+            new_node = node.copy()
+            new_node.set_host(result)
+            result._nodes.append(new_node)
+        result.size += self.size
+        return result
 
     def is_rising_connection_errors(self):
         return self._rising_connection_errors
@@ -171,3 +182,33 @@ class Host:
 
     def send_wealth_to(self, src, dst, amount):
         self._nodes[dst].stack_wealth(src, dst, amount)
+
+    def filter_indexes(self, func, from_indexes=None):
+        if from_indexes is None:
+            from_indexes = range(self.size)
+        return list(filter(lambda k: self._nodes[k].check_condition(func), from_indexes))
+
+    def filter(self, func, from_nodes=None):
+        if from_nodes is None:
+            from_nodes = self._nodes
+        return list(filter(lambda node: node.check_condition(func), from_nodes))
+
+    def neighbors(self, indexes=list()):
+        result = set()
+        for k in indexes:
+            result |= set().union(*self._nodes[k].get_connections())
+        result = list(result - set(indexes))
+        return result
+
+    def hist_values(self, key, from_indexes=None, default_value=IgnoreNoValues()):
+        if from_indexes is None:
+            from_indexes = range(self.size)
+        result = dict()
+        for k in from_indexes:
+            val = self._nodes[k].get(key, default_value)
+            if isinstance(val, self.IgnoreNoValues):
+                continue
+            if val not in result:
+                result[val] = 0
+            result[val] += 1
+        return result

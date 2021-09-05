@@ -2,9 +2,9 @@ from lib.Node import Node
 from random import choice, randint
 
 
-class StupidNode(Node):
+class SimpleNode(Node):
     def __init__(self, index = -1, initial_wealth=0, **kwargs):
-        super(StupidNode, self).__init__(index, initial_wealth, **kwargs)
+        super(SimpleNode, self).__init__(index, initial_wealth, **kwargs)
         if 'max_transaction' in kwargs:
             self._data['max_transaction'] = kwargs['max_transaction']
         else:
@@ -19,11 +19,15 @@ class StupidNode(Node):
             self._data['wealth_history'] = [self._data['wealth'], ]
 
     def exec(self):
-        for income in self._input_buffer:
-            self._data['wealth'] += income[2]
-        self._input_buffer.clear()
+        my_input_buffer = self.receive_stack_wealth()
 
-        self.send_wealth(choice(self.get_connections()[0]), randint(1, self._data['max_transaction']))
+        for income in my_input_buffer:
+            self._data['wealth'] += income[2]
+
+        send_amount = randint(1, self._data['max_transaction'])
+        dst = choice(self.get_connections()[0])
+        self.send_wealth(dst, send_amount)
+        self._data['wealth'] -= send_amount
 
         self.remember()
 
