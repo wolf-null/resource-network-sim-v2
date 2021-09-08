@@ -9,25 +9,32 @@ class SimpleNode(Node):
             self._data['max_transaction'] = kwargs['max_transaction']
         else:
             self._data['max_transaction'] = 1
+        self.delayed_outcome = 0
         self.remember()
 
     def remember(self):
         # Historical stuff
-        if 'wealth_history' in self._data:
-            self._data['wealth_history'].append(self._data['wealth'])
-        else:
-            self._data['wealth_history'] = [self._data['wealth'], ]
+        if 'wealth_history' not in self:
+            self.set('wealth_history', list())
+        self.append('wealth_history', self.get('wealth'))
 
     def exec(self):
-        my_input_buffer = self.receive_stack_wealth()
+        my_input_buffer = self.pop_signal_stack()
+        self.set('wealth', self.get('wealth') - self.delayed_outcome)
 
+        total_income = 0
         for income in my_input_buffer:
-            self._data['wealth'] += income[2]
+            total_income += income[2]
+        self.set('wealth', self.get('wealth') + total_income)
 
-        send_amount = randint(1, self._data['max_transaction'])
+        send_amount = min(randint(1, self.get('max_transaction')), self.get('wealth'))
         dst = choice(self.get_connections()[0])
-        self.send_wealth(dst, send_amount)
-        self._data['wealth'] -= send_amount
+
+        self.send_signal(dst, send_amount)
+        self.delayed_outcome = send_amount
 
         self.remember()
+
+    def post_exec(self):
+        pass
 

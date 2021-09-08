@@ -39,6 +39,7 @@ class Host:
         self._nodes = list()
         self._rack = list()
         self._rising_connection_errors = True
+        self._global_data = list()
 
     def reset_nodes(self):
         self.size = 0
@@ -180,8 +181,8 @@ class Host:
         self.connect_n(links)
         self.size = len(nodes)
 
-    def send_wealth_to(self, src, dst, amount):
-        self._nodes[dst].stack_wealth(src, dst, amount)
+    def send_signal_to(self, src, dst, amount):
+        self._nodes[dst].push_signal(src, dst, amount)
 
     def filter_indexes(self, func, from_indexes=None):
         if from_indexes is None:
@@ -191,7 +192,7 @@ class Host:
     def filter(self, func, from_nodes=None):
         if from_nodes is None:
             from_nodes = self._nodes
-        return list(filter(lambda node: node.check_condition(func), from_nodes))
+        return list(filter(lambda node: node.apply(func), from_nodes))
 
     def neighbors(self, indexes=list()):
         result = set()
@@ -212,3 +213,9 @@ class Host:
                 result[val] = 0
             result[val] += 1
         return result
+
+    def apply(self, func):
+        return [node.apply(func) for node in self._nodes]
+
+    def apply_get_set(self, func):
+        return [node.apply_get_set(func) for node in self._nodes]

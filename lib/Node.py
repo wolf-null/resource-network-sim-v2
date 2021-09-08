@@ -8,9 +8,12 @@ class Node:
         self.__reverse_connections = list()
         self.my_input_buffer = list()
         self._data = {'wealth': initial_wealth}
-        self._stack_locker = threading.Lock()
+        self._wealth_stack_locker = threading.Lock()
+        self._data_write_locker = threading.Lock()
         self._receiver_locker = threading.Lock()
         self._host = None
+        self._data_write_stack = list()
+        self._set_locker = threading.Lock()
 
     def get(self, key, default_value=None):
         """
@@ -21,10 +24,21 @@ class Node:
             return self._data[key]
         return default_value
 
-    def check_condition(self, func):
-        if func(self._data):
-            return True
-        return False
+    def set(self, key, value):
+        self._set_locker.acquire()
+        self._data[key] = value
+        self._set_locker.release()
+
+    def append(self, key, value):
+        self._set_locker.acquire()
+        self._data[key].append(value)
+        self._set_locker.release()
+
+    def apply(self, func):
+        return func(self._data)
+
+    def apply_get_set(self, func):
+        return func(lambda var, dfv: self.get(var, dfv), lambda var, val: self.set(var, val))
 
     def __contains__(self, item):
         return item in self._data
@@ -39,9 +53,6 @@ class Node:
 
     def set_host(self, host=None):
         self._host = host
-
-    def set(self, key, value):
-        self._data[key] = value
 
     def connections(self):
         return self.__connections
@@ -109,40 +120,44 @@ class Node:
         self.__reverse_connections.remove(node_index)
         return True
 
-    def stack_wealth(self, src, dst, amount):
+    def push_signal(self, src, dst, amount):
         """
-        TODO: A thread safe stacking (supposed to be)
-
         :param src: sender of wealth
         :param dst: in simple cases node is receiving only the wealth send directly to it, but there are cases
         :param amount: amount of wealth sent
         :return: True if success or False if blocked. The way of calling this function is:
 
-        while not node.stack_wealth(...):
+        while not node.push_signal(...):
             pass
         """
-        self._stack_locker.acquire()
+        self._wealth_stack_locker.acquire()
         self.my_input_buffer.append((src, dst, amount))
-        self._stack_locker.release()
+        self._wealth_stack_locker.release()
         return True
 
-    def receive_stack_wealth(self, number_or_records=-1):
-        self._stack_locker.acquire()
+    def pop_signal_stack(self, number_or_records=-1):
+        self._wealth_stack_locker.acquire()
         if number_or_records != -1:
             result = self.my_input_buffer[0:number_or_records]
         else:
             result = self.my_input_buffer.copy()
         self.my_input_buffer = self.my_input_buffer[number_or_records:-1]
-        self._stack_locker.release()
+        self._wealth_stack_locker.release()
         return result
 
-    def send_wealth(self, dst, amount):
-        self._host.send_wealth_to(self, dst, amount)
+    def send_signal(self, dst, amount):
+        self._host.send_signal_to(self, dst, amount)
 
     def exec(self):
         """
         The way of cleaning input stack is also determined by inheritors
-        Use receive_stack_wealth when exec() starts and
+        Use pop_signal_stack when exec() starts and
+        """
+        pass
+
+    def post_exec(self):
+        """
+        Launched after the end of the stage
         """
         pass
 
