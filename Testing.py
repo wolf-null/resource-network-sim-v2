@@ -3,11 +3,13 @@ from lib.NetworkBuilders.BuildCompleteGraph import BuildCompleteGraph
 from lib.NetworkBuilders.DropoutLimited import DropoutLimited
 from lib.NetworkBuilders.BuildGridGraph import BuildGridGraph
 from lib.NetworkBuilders.ColoringFaster import ColoringFaster
-from lib.Stages.StageExecParallel import StageExecParallel
+from lib.Stages.StageExecSync import StageExecSync
 from lib.Stages.StageExec import StageExec
 from lib.Nodes.SimpleNode import SimpleNode
 from lib.Nodes.SimpleNodeIndirected import SimpleNodeIndirected
 from lib.Stages.StagePlotGraph import StagePlotGraph
+from lib.Stages.StageExecAsync import StageExecAsync
+from lib.NetworkBuilders.SameSegments import SameSegments
 import time
 import keyboard
 
@@ -20,21 +22,30 @@ if __name__ == '__main__':
     def color_rule(data):
         return (data['sum_wealth'] if 'sum_wealth' in data else 0, 0, 0)
 
-    network = ColoringFaster(BuildGridGraph(node_initializer=lambda: SimpleNodeIndirected(initial_wealth=1000, max_transaction=10))).build(n)
+    network = SameSegments(BuildGridGraph(node_initializer=lambda: SimpleNodeIndirected(initial_wealth=1000, max_transaction=10, idle_threshold=-1)), n_segments=2, random_order=False).build(n)
     initial = network.hist_values('wealth')
-    stage_exec = StageExec(network, 'exec_node', number_of_substages=100)
-    stage_graplot = StagePlotGraph(network, color_rule=color_rule, bgcolor='darkgray', ground_normalize=False)
+    stage_exec = StageExecAsync(network)
+    stage_graplot = StagePlotGraph(network, color_rule=color_rule, bgcolor='black', ground_normalize=False)
 
     print('start load')
     iteration = 0
     while not keyboard.is_pressed('ctrl+break'):
-        stage_exec.run()
-        if iteration % 20 == 0 and iteration >= 400:
-            network.apply_get_set(save_stat)
+        network.apply_get_set(save_stat)
         stage_graplot.run()
+        stage_exec.run()
         hist = network.hist_values('wealth')
-        summary = sum(network.apply(lambda data: data['wealth']))
         iteration += 1
         print('\riter: {0}'.format(iteration), end='')
+        time.sleep(0.1)
 
+    stage_exec.halt()
 
+    time.sleep(0.5)
+    stage_graplot.run()
+    time.sleep(0.5)
+
+    while keyboard.is_pressed('ctrl+break'):
+        pass
+    print("press [ ] to exit")
+    while not keyboard.is_pressed(' '):
+        time.sleep(0.1)

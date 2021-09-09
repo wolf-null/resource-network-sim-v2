@@ -35,6 +35,8 @@ class SimpleNode(Node):
 
         self.remember()
 
+        return len(my_input_buffer) == 0
+
     def post_exec(self):
         pass
 

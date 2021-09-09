@@ -14,6 +14,7 @@ class Node:
         self._host = None
         self._data_write_stack = list()
         self._set_locker = threading.Lock()
+        self._idle_mode = False
 
     def get(self, key, default_value=None):
         """
@@ -147,6 +148,12 @@ class Node:
 
     def send_signal(self, dst, amount):
         self._host.send_signal_to(self, dst, amount)
+
+    def set_idle(self, state):
+        self._idle_mode = state
+
+    def is_idle(self):
+        return self._idle_mode
 
     def exec(self):
         """

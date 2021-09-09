@@ -9,9 +9,9 @@ def pipeline_exec(nodes):
         node.exec()
 
 
-class StageExecParallel(Stage):
+class StageExecSync(Stage):
     def __init__(self, host=Host(), name=str(), enabled=True, seek_color='color', number_of_substages=1):
-        super(StageExecParallel, self).__init__(name, enabled)
+        super(StageExecSync, self).__init__(name, enabled)
         self._first_start = True
         self._pipelines = list()
         self._seek_color = seek_color
@@ -26,7 +26,7 @@ class StageExecParallel(Stage):
             self._pipelines.append([nodes_of_color, ])
 
     def run(self):
-        if not super(StageExecParallel, self).run():
+        if not super(StageExecSync, self).run():
             return False
 
         if self._first_start:

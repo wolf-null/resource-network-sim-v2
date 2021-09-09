@@ -10,7 +10,7 @@ class ColoringFaster(NetworkBuilder):
         self._color_variable = color_variable
 
     def building_operations(self, n=0):
-        print('[ColoringFaster]: Start')
+        print('[ColoringFaster]: Begin')
 
         for k in range(self._host.size):
             self._host.get_node(k).set(self._color_variable, k)
@@ -22,6 +22,8 @@ class ColoringFaster(NetworkBuilder):
             while new_color in near_colors:
                 new_color += 1
             self._host.get_node(k).set(self._color_variable, new_color)
+
+        print('[BuildGridGraph]: End')
 
 
 

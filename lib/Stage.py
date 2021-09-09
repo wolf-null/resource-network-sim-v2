@@ -14,3 +14,6 @@ class Stage:
         if not self._enabled:
             return False
         return True
+
+    def halt(self):
+        pass

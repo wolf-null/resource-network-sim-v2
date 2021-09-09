@@ -9,7 +9,7 @@ class BuildGridGraph(NetworkBuilder):
         self._node_init = node_initializer
 
     def building_operations(self, n=0):
-        print('[BuildGridGraph]: Start')
+        print('[BuildGridGraph]: Begin')
         n_nodes = n ** 2
         nodes = [self._node_init() if callable(self._node_init) else Node() for node in range(n_nodes)]
         self._host.add_nodes(nodes)
@@ -20,5 +20,6 @@ class BuildGridGraph(NetworkBuilder):
             if k // n != n - 1:
                 links += [[k, k + n]]
         self._host.connect_both_ways_n(links)
+        print('[BuildGridGraph]: End')
 
 

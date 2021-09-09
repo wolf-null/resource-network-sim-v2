@@ -23,6 +23,14 @@ class SimpleNodeIndirected(Node):
             self._data['max_transaction'] = kwargs['max_transaction']
         else:
             self._data['max_transaction'] = 1
+
+        if 'idle_threshold' in kwargs:
+            self._idle_threshold = kwargs['idle_threshold']
+        else:
+            self._idle_threshold = -1
+        self._idle_counter = 0
+        self.set_idle(False)
+
         self.delayed_outcome = 0
         self.remember()
 
@@ -36,13 +44,29 @@ class SimpleNodeIndirected(Node):
         my_input_buffer = self.pop_signal_stack()
         self.set('wealth', self.get('wealth') - self.delayed_outcome)
 
+        outcome_multiplier = 1
         total_income = 0
         self.delayed_outcome = 0
+
+        # Explanation of the following code and the original problem is discussed in /Problems.md
+        if self._idle_threshold > 0:
+            if len(my_input_buffer) == 0:
+                self._idle_counter += 1
+            else:
+                self._idle_counter = 0
+
+            if self._idle_counter >= self._idle_threshold:
+                if len(my_input_buffer) == 0:
+                    self.set_idle(True)
+
+        if self.is_idle():
+            outcome_multiplier = 0
+
         for income in my_input_buffer:
             if isinstance(income[2], StraightTransaction):
                 total_income += income[2].amount
             elif isinstance(income[2], ReverseTransaction):
-                send_amount = min(randint(1, self.get('max_transaction')), self.get('wealth'))
+                send_amount = min(randint(1, self.get('max_transaction')), self.get('wealth')) * outcome_multiplier
                 dst = income[1]
                 self.send_signal(dst, StraightTransaction(send_amount))
                 self.delayed_outcome += send_amount
@@ -59,6 +83,7 @@ class SimpleNodeIndirected(Node):
             self.send_signal(dst, ReverseTransaction())
 
         self.remember()
+        return int(outcome_multiplier)
 
     def post_exec(self):
         pass

@@ -36,7 +36,7 @@ class StagePlotGraph(Stage):
         self._graph.add_nodes_from(nodes)
         self._graph.add_edges_from(links)
         colors = [(0, 0, 0) for node in range(len(nodes))]
-        self._netx = networkx.draw_networkx(self._graph, ax=self._axes, with_labels=False, node_size=12,
+        self._netx = networkx.draw_networkx(self._graph, ax=self._axes, with_labels=False, node_size=42,
                                             edge_color='gray', node_color=colors, pos=networkx.kamada_kawai_layout(self._graph))
         plt.draw()
         plt.ioff()
