@@ -26,3 +26,12 @@ class HostError_Connection(HostError):
 
 class HostError_CompletenessViolated(HostError):
     pass
+
+
+class HostError_NotSupported(HostError):
+    pass
+
+
+class HostError_NoSuchNode(HostError):
+    pass
+

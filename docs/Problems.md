@@ -14,7 +14,7 @@ As the consequence
   2. [-] The problem is overloading the input stacks by broadcasting (this also requires additional input processing to count broadcasts)
   3. [-] Since the node is executed much more times than it's really ready to 'wake up', there is a lot of CPU time goes for doing nothing useful, but skipping ordinary exec()
   4. [-] There is some possibility of deadlock                    
-    1. [+] Easy to solve by dropping all 'idle' states back to 'normal' at the end of traversing all nodes in its execution thread.
+        1. [+] Easy to solve by dropping all 'idle' states back to 'normal' at the end of traversing all nodes in its execution thread.
   5. ​	[+] But this indeed shall prevent nodes from premature-execution
 
 
@@ -48,3 +48,32 @@ Applying asynchronous execution leads to 'overactivity' of such nodes of rare co
 	2. But also this lets to balance PC's computation resources.
 3. The simplest way is setting thread priority based on number of nodes in the thread. Can be done even before the launch, but will fail if the network is heterogenous.
 4. Another way of regulation node's activity is bottlenecking the signal transmission mechanisms of such nodes.
+
+#### **PROBLEM: Using queues**
+
+According to https://docs.python.org/3/library/multiprocessing.html#multiprocessing.Queue, Python starts a dedicated process for each queue to transmit data between synced processes. If to use four queues (as supposed at the first revision of RNSv2), this will raise at least five processes for each processing core (NXProc). Slowdown might be expected.
+
+It is important not to cross input and output data, in other case, one have to overcomplicate data transmission code.
+
+One can decrease the number of queues by unifying the input data queue with the input signal queue, and the output data queue with the output signal queue. This isn't changing things much since passing signals and data in the same direction (input nor output) is done at the same phase (simultaneously).
+
+Unifying these two queues might be more problematic. The reason is that the A phase includes both reading data/signals from queues and execution the nodes. The latter leads to appending data to the output queues immediately. This can lead to crossing over the output data/signals with the old data/signals not yet read. 
+
+From the other hand, data queries is not processed by the exec. Furthermore, it is fully processed right before the execution. This is why, at the A phase, when exec() starts the data queries is already extracted from the queue. So only the input signals can cross over with output signals.
+
+To resolve this, one can demand to read all input signals right after the exec starts and put it to internal (local) buffer of the exec() function.
+
+As the result, when any new data updates or signals will be passed to the queue, all previous input data updates and signals are already been read and extracted.
+
+Since data transmission and signal transmission isn't done in parallel, there is no real need in splitting data and signal buses: it will be processed sequentially in a single thread. It might look that unification of the buses of different kind will overcomplicate dataflow process. But data updates can be encapsulated in the same form as signals: to specific signal classes and already comes in within a random order.
+
+Since all process are connected only to it's host, one can use python's Pipe object instead of Queue. Using JoinableQueue might simplify syncing process, but since not all nodes are passed to each process (NXProc), the process can execute only it's own instructions and process only it's own nodes. This is why using Pipe as the data/signal bus and Event for syncing phases is more preferred.
+
+Nodes aren't expected to read other node's states. The mirror database works one way and used by Stages launched by the master process. Mirror database can be changed by the Stages, but these changes remain at the mirror without affecting node's regular work. From the other hand, it's not complicated to add the ability to 're-mirror' changes from master database back to nodes.  Just for flexibility. This option is to be turned on manually (disabled by default), since it's idling will slow down master signal handling.
+
+In short, the solution is as follows:
+
+* Use Event object to sync phases of all processes.
+* Use Pipe to transmit data and signals
+* Use the same pipe for transmission signals from master process to hosts and vice versa.
+
