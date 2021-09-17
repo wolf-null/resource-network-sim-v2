@@ -44,8 +44,12 @@ class Node:
     def __contains__(self, item):
         return item in self._data
 
-    def copy(self):
-        result = (type(self))(self.index)
+    def copy(self, dst=None):
+        # TODO: Such a behavior below might be counterintuitive. Refactor?
+        if dst is None:
+            result = (type(self))(self.index)
+        else:
+            result = dst
         result.__connections = self.__connections.copy()
         result.__reverse_connections = self.__reverse_connections.copy()
         result.my_input_buffer = self.my_input_buffer.copy()

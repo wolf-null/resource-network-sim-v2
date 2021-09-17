@@ -12,8 +12,21 @@ from lib.Stages.StageExecAsync import StageExecAsync
 from lib.NetworkBuilders.SameSegments import SameSegments
 import time
 import keyboard
+import multiprocessing as mlproc
+
+from lib.Hosts.MasterHost import MasterHost
+from lib.Nodes.HeartbeatNode import HeartbeatNode
 
 if __name__ == '__main__':
+    mlproc.set_start_method('forkserver')
+    master = MasterHost(name='master')
+    node_Alice = HeartbeatNode(heartbeat_dst=['Bob', ], index='Alice')
+    node_Bob = HeartbeatNode(heartbeat_dst=['Alice', ], index='Bob')
+    master.join([[node_Alice, ], [node_Bob, ]])
+    master.run()
+
+
+    '''
     n = 20
 
     def save_stat(gt, st):
@@ -49,3 +62,4 @@ if __name__ == '__main__':
     print("press [ ] to exit")
     while not keyboard.is_pressed(' '):
         time.sleep(0.1)
+    '''
