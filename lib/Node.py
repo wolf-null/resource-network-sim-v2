@@ -1,4 +1,4 @@
-import threading
+#import threading
 
 
 class Node:
@@ -8,12 +8,12 @@ class Node:
         self.__reverse_connections = list()
         self.my_input_buffer = list()
         self._data = {'wealth': initial_wealth}
-        self._wealth_stack_locker = threading.Lock()
-        self._data_write_locker = threading.Lock()
-        self._receiver_locker = threading.Lock()
+        #self._wealth_stack_locker = threading.Lock()
+        #self._data_write_locker = threading.Lock()
+        #self._receiver_locker = threading.Lock()
         self._host = None
         self._data_write_stack = list()
-        self._set_locker = threading.Lock()
+        #self._set_locker = threading.Lock()
         self._idle_mode = False
 
     def get(self, key, default_value=None):
@@ -26,14 +26,14 @@ class Node:
         return default_value
 
     def set(self, key, value):
-        self._set_locker.acquire()
+        #self._set_locker.acquire()
         self._data[key] = value
-        self._set_locker.release()
+        #self._set_locker.release()
 
     def append(self, key, value):
-        self._set_locker.acquire()
+        #self._set_locker.acquire()
         self._data[key].append(value)
-        self._set_locker.release()
+        #self._set_locker.release()
 
     def apply(self, func):
         return func(self._data)
@@ -54,6 +54,7 @@ class Node:
         result.__reverse_connections = self.__reverse_connections.copy()
         result.my_input_buffer = self.my_input_buffer.copy()
         result._data = self._data.copy()
+        result.index = self.index
         return result
 
     def set_host(self, host=None):
@@ -135,19 +136,19 @@ class Node:
         while not node.push_signal(...):
             pass
         """
-        self._wealth_stack_locker.acquire()
+        #self._wealth_stack_locker.acquire()
         self.my_input_buffer.append((src, dst, amount))
-        self._wealth_stack_locker.release()
+        #self._wealth_stack_locker.release()
         return True
 
     def pop_signal_stack(self, number_or_records=-1):
-        self._wealth_stack_locker.acquire()
+        #self._wealth_stack_locker.acquire()
         if number_or_records != -1:
             result = self.my_input_buffer[0:number_or_records]
         else:
             result = self.my_input_buffer.copy()
         self.my_input_buffer = self.my_input_buffer[number_or_records:-1]
-        self._wealth_stack_locker.release()
+        #self._wealth_stack_locker.release()
         return result
 
     def send_signal(self, dst, amount):

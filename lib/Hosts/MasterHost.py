@@ -20,7 +20,7 @@ class MasterHost(Host):
         self._bus = host_bus
         self._a_start_event = a_start_event
         self._a_finish_event = a_end_event
-        self._alias = dict()  # type:  Mapping[Any, GhostNode]
+        self._alias = dict()  # type:  Dict[Any, GhostNode]
         self._process = this_process
         if len(name) == 0:
             name = str(random.randint(0, 65535))
@@ -50,6 +50,12 @@ class MasterHost(Host):
         # TODO: Initializing
         self._output_buffers = dict()  # type: Dict[str, list]
 
+        # Terminals : multiprocessing.conection (Pipe)
+        self._terminals = dict()
+
+        # Number of exec() full stages passed
+        self.iteration = 0
+
     def join(self, node_lists : list, host_names: list = None):
         # TODO: Add nodes to existing processes and auto generating names via host_names
         if host_names is None:
@@ -64,20 +70,26 @@ class MasterHost(Host):
             self._host_buses[new_host_name] = bus[0]
             self._output_buffers[new_host_name] = list()
 
+            # Initialize terminal bus (Pipe)
+            term = multiprocessing.Pipe()
+            self._terminals[new_host_name] = term[0]
+
             # Init a-start and a-finish events
             self._a_start_events[new_host_name] = multiprocessing.Event()
             self._a_finish_events[new_host_name] = multiprocessing.Event()
             self._a_finish_events[new_host_name].set()
 
             # Init ProcessingHost class
-            host = ProcessingHost(bus[1], a_start_event=self._a_start_events[new_host_name],
-                                  a_end_event=self._a_finish_events[new_host_name], name=new_host_name)
+            host = ProcessingHost(bus[1], a_start_event=None,
+                                  a_end_event=None, name=new_host_name)
 
-            proc = multiprocessing.Process(target=host.run)
+            proc = multiprocessing.Process(target=host.run, args=(bus[1], self._a_start_events[new_host_name], self._a_finish_events[new_host_name], term[1]))
+
             host.set_process(proc)
 
             self._process_hosts[new_host_name] = host
             self._processes[new_host_name] = proc
+            # TODO: Pass also a process...
 
             # Add nodes:
             for node in nodes:
@@ -107,9 +119,9 @@ class MasterHost(Host):
     def process_data_signal(self, signal):
         """Update Node's states (receive set, append, set_last)"""
         if isinstance(signal, SignalSet):
-            self._alias[signal.dst].set(signal.key(), signal.value(), mirror=False)
+            self._alias[signal.dst].set(signal.key, signal.value, mirror=False)
         elif isinstance(signal, SignalAppend):
-            self._alias[signal.dst].append(signal.key(), signal.value(), mirror=False)
+            self._alias[signal.dst].append(signal.key, signal.value, mirror=False)
         else:
             print("[ProcessingHost|{0}]: No data instructions for signal {1}".format(self.name, type(signal)))
 
@@ -142,8 +154,15 @@ class MasterHost(Host):
                 else:
                     raise HostError_NoSuchNode('The node {0} is not here!'.format(dst))
 
+    def collect_terminal(self):
+        for key in self._terminals.keys():
+            while self._terminals[key].poll():
+                print("> ".format(self._terminals[key].recv()))
+
     def exec(self):
         while not self._terminate_request.is_set():
+            print('#{1} [MasterHost|{0}]: Start A-phase'.format(self.name, self.iteration))
+
             # Start ProcessHosts:
             for key in self._process_hosts.keys():
                 self._a_finish_events[key].clear()
@@ -156,16 +175,21 @@ class MasterHost(Host):
             for key in self._process_hosts.keys():
                 self._a_finish_events[key].wait()
 
+            print('#{1} [MasterHost|{0}]: End A-phase'.format(self.name, self.iteration))
+
             # Routing phase I: Clear buffer
             for key in self._output_buffers:
                 self._output_buffers[key].clear()
 
             # Routing phase II. Buffer input (and route)
+            print('#{0} [MasterHost|{1}]: Prerouting...'.format(self.iteration, self.name))
             for key in self._host_buses:
                 bus = self._host_buses[key]
+                print('#{0} [MasterHost|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
                 while bus.poll():
                     signal = bus.recv()
-                    dst = signal.dst()
+                    print('#{0} [MasterHost|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
+                    dst = signal.dst
                     if dst == self.name:
                         self.process_host_signal(signal)
                         # TODO: process_host handling for Master may differ
@@ -180,6 +204,12 @@ class MasterHost(Host):
             for key in self._process_hosts.keys():
                 for msg in self._output_buffers[key]:
                     self._host_buses[key].send(msg)
+                    print('#{2} [MasterHost|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
+
+            self.iteration += 1
+
+            for key in self._alias:
+                print("{0}'s counter = {1}".format(key, self._alias[key].get('exec_counter')))
 
         # When _terminate_request event is set, execution cycle ends and Master sends termination signals to hosts:
         for host in self._process_hosts.values():
@@ -192,18 +222,12 @@ class MasterHost(Host):
     def run(self):
         print("[MasterHost|{0}] Launching Processors ...".format(self.name))
 
-        for proc_host in self._process_hosts:
-            if not self._process_hosts[proc_host].get_process().is_alive():
-                self._process_hosts[proc_host].run()
-
-        '''
-        
         try:
             for proc_host in self._process_hosts:
                 if not self._process_hosts[proc_host].get_process().is_alive():
-                    self._process_hosts[proc_host].run()
+                    self._processes[proc_host].start()
         except Exception:
             print("[MasterHost|{0}] PANIC: Processor launching has interrupted!".format(self.name))
         else:
-            print("[MasterHost|{0}] Hosts launched!".format(self.name))'''
+            print("[MasterHost|{0}] Hosts launched!".format(self.name))
 

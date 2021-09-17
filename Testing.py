@@ -18,12 +18,14 @@ from lib.Hosts.MasterHost import MasterHost
 from lib.Nodes.HeartbeatNode import HeartbeatNode
 
 if __name__ == '__main__':
-    mlproc.set_start_method('forkserver')
     master = MasterHost(name='master')
-    node_Alice = HeartbeatNode(heartbeat_dst=['Bob', ], index='Alice')
-    node_Bob = HeartbeatNode(heartbeat_dst=['Alice', ], index='Bob')
-    master.join([[node_Alice, ], [node_Bob, ]])
+    node_Alice = HeartbeatNode(index='Alice', heartbeat_dst=['Bob', 'Charlie'])
+    node_Bob = HeartbeatNode(index='Bob', heartbeat_dst=['Alice', 'Charlie'])
+    node_Charlie = HeartbeatNode(index='Charlie', heartbeat_dst=['Alice', 'Bob'])
+
+    master.join([[node_Alice, ], [node_Bob, node_Charlie]])
     master.run()
+    master.exec()
 
 
     '''

@@ -4,7 +4,7 @@ class Signal:
         self.src = src
 
     def __repr__(self):
-        return repr("<Signal:{0}| {1} --> {2}>".format(type(self).__name__, self.src, self.dst))
+        return repr("<Signal:{0}| {1} --> {2} >".format(type(self).__name__, self.src, self.dst))
 
 # ----------------------------------------- DATA SIGNALS -----------------------------------------------
 
@@ -15,7 +15,7 @@ class DataSignal(Signal):
 
 class SignalSet(DataSignal):
     def __init__(self, dst=None, src=None, key=None, value=None):
-        super(SignalSet, self).__init__(src, dst)
+        super(SignalSet, self).__init__(dst=dst, src=src)
         self.key = key
         self.value = value
 
@@ -28,7 +28,7 @@ class SignalSet(DataSignal):
 
 class SignalAppend(DataSignal):
     def __init__(self, dst=None, src=None, key=None, value=None):
-        super(SignalAppend, self).__init__(src, dst)
+        super(SignalAppend, self).__init__(dst=dst, src=src)
         self.key = key
         self.value = value
 
@@ -38,9 +38,6 @@ class SignalAppend(DataSignal):
     def value(self):
         return self.value()
 
-
-class SignalIsAlive(DataSignal):
-    pass
 
 # ----------------------------------------- HOST SIGNALS -----------------------------------------------
 
@@ -62,5 +59,12 @@ class HostWait(HostSignal):
         return self._time
 
 
-# ----------------------------------------- DATA SIGNALS -----------------------------------------------
+# ----------------------------------------- NODE SIGNAL -----------------------------------------------
+
+class NodeSignal(Signal):
+    pass
+
+
+class SignalIsAlive(NodeSignal):
+    pass
 

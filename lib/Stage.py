@@ -6,6 +6,7 @@ class Stage:
         self._host = host
         self._enabled = enabled
         self.name = name
+        self._terminal = None  # multiprocessing.connection
 
     def set_host(self, host=Host()):
         self._host = host
