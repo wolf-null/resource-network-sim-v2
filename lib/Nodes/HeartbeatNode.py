@@ -1,7 +1,7 @@
 from lib.Nodes.GhostNode import GhostNode
 from lib.Signals import SignalIsAlive
 import time
-
+import random as rnd
 
 class HeartbeatNode(GhostNode):
     class Broadcast:
@@ -25,7 +25,12 @@ class HeartbeatNode(GhostNode):
 
         print("[HeartbeatNode|{0}]: Signals received! Now sleep!".format(self.index))
 
-        time.sleep(2)
+        bench = [rnd.random() for k in range(1000000)]
+        rnd.shuffle(bench)
+        for k in range(len(bench)-1):
+            bench[k+1] = bench[k] * bench[k+1]
+        print("[HeartbeatNode|{0}]: Sum = {1}".format(self.index, sum(bench)))
+
         print("[HeartbeatNode|{0}]: Awake after sleep".format(self.index))
 
         for send_to in self.get('heartbeat_dst'):
