@@ -47,7 +47,6 @@ class MasterHost(Host):
         self._host_buses = dict()  # type: Dict[str, multiprocessing.connection]
 
         # Output signal buffers host_name --> list <signal>
-        # TODO: Initializing
         self._output_buffers = dict()  # type: Dict[str, list]
 
         # Terminals : multiprocessing.conection (Pipe)
@@ -57,9 +56,10 @@ class MasterHost(Host):
         self.iteration = 0
 
     def join(self, node_lists : list, host_names: list = None):
-        # TODO: Add nodes to existing processes and auto generating names via host_names
+        # TODO: Check: Is join() can actually join a new host
+        # TODO: Check: Will join() add node to an existing Host if the hostname matches
         if host_names is None:
-            host_names = ["{0}.ProcH_{1}".format(self.name, k) for k in range(len(node_lists))]
+            host_names = ["{0}.ProcHost_{1}".format(self.name, k) for k in range(len(node_lists))]
 
         for nodes_index in range(len(node_lists)):
             nodes = node_lists[nodes_index]
