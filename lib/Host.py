@@ -1,29 +1,5 @@
 from lib.Node import Node
 from lib.Errors import *
-from typing import List, Dict
-
-def dict_sum(a=dict(), b=dict()):
-    difference = dict()
-    united_keys = list(set(a.keys()) | set(b.keys()))
-    for key in united_keys:
-        a_val = a[key] if key in a else 0
-        b_val = b[key] if key in b else 0
-        difference[key] = a_val + b_val
-    return difference
-
-
-def dict_by_number(a=dict(), number=int()):
-    result = a.copy()
-    for key in a.keys():
-        result[key] *= number
-    return result
-
-
-def dict_add_number(a=dict(), number=int()):
-    result = a.copy()
-    for key in a.keys():
-        result[key] += number
-    return result
 
 
 class Host:
