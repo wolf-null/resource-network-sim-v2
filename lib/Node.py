@@ -143,9 +143,6 @@ class Node:
     def send_signal(self, dst, amount):
         self._host.send_signal_to(self, dst, amount)
 
-    def set_idle(self, state):
-        self._idle_mode = state
-
     def is_idle(self):
         return self._idle_mode
 
