@@ -25,18 +25,14 @@ def pipeline_exec(nodes, halt_signal=StageRequestHalt(), random_order=True):
     tid = random.randint(0, 65535)
     print('[ExecAsync]: A thread {0} with {1} nodes is started!\n'.format(tid, len(nodes)))
     iteration = 0
-    idle = 0
     while not halt_signal.is_halt():
         if random_order:
             # Shuffle if random execution order enabled.
             shuffle(nodes)
 
-        for node in nodes:
-            idle += node.exec()
-
         iteration += 1
 
-    print('\n[ExecAsync]: {0} halted at #{1}. Idles: {2}. Efficiency: {3}% \n'.format(tid, iteration, idle, round(100*(1-idle/iteration/len(nodes)), 3)))
+    print('\n[ExecAsync]: {0} halted at #{1}\n'.format(tid, iteration))
 
 
 class StageExecAsync(Stage):
