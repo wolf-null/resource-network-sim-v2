@@ -49,9 +49,6 @@ class MasterHost(Host):
         # Output signal buffers host_name --> list <signal>
         self._output_buffers = dict()  # type: Dict[str, list]
 
-        # Terminals : multiprocessing.conection (Pipe)
-        self._terminals = dict()
-
         # Number of exec() full stages passed
         self.iteration = 0
 
@@ -72,7 +69,6 @@ class MasterHost(Host):
 
             # Initialize terminal bus (Pipe)
             term = multiprocessing.Pipe()
-            self._terminals[new_host_name] = term[0]
 
             # Init a-start and a-finish events
             self._a_start_events[new_host_name] = multiprocessing.Event()
@@ -153,11 +149,6 @@ class MasterHost(Host):
                     self._alias[dst].emit(signal)  # Push signal to node's input stack. Processed by exec() at call
                 else:
                     raise HostError_NoSuchNode('The node {0} is not here!'.format(dst))
-
-    def collect_terminal(self):
-        for key in self._terminals.keys():
-            while self._terminals[key].poll():
-                print("> ".format(self._terminals[key].recv()))
 
     def exec(self):
         while not self._terminate_request.is_set():
