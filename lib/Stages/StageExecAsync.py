@@ -34,8 +34,6 @@ def pipeline_exec(nodes, halt_signal=StageRequestHalt(), random_order=True):
         for node in nodes:
             idle += node.exec()
 
-        for node in nodes:
-            node.set_idle(False)
         iteration += 1
 
     print('\n[ExecAsync]: {0} halted at #{1}. Idles: {2}. Efficiency: {3}% \n'.format(tid, iteration, idle, round(100*(1-idle/iteration/len(nodes)), 3)))
