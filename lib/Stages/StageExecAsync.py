@@ -1,7 +1,7 @@
 import random
 
 from lib.Stage import Stage
-from lib.Host import Host
+from lib.Bus import Bus
 from random import shuffle
 import threading
 
@@ -42,7 +42,7 @@ def pipeline_exec(nodes, halt_signal=StageRequestHalt(), random_order=True):
 
 
 class StageExecAsync(Stage):
-    def __init__(self, host=Host(), name=str(), enabled=True, seek_color='color', random_order=True):
+    def __init__(self, host=Bus(), name=str(), enabled=True, seek_color='color', random_order=True):
         super(StageExecAsync, self).__init__(name, enabled)
         self._first_start = True
         self._pipelines = list()

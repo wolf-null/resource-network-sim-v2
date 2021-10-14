@@ -3,7 +3,7 @@ from abc import abstractmethod
 
 from lib.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
-from lib.Host import Host
+from lib.Bus import Bus
 import random as rnd
 from lib.Errors import GeneralError_WrongInput, HostError_CompletenessViolated, GeneralError_NotCallable
 import random as rnd

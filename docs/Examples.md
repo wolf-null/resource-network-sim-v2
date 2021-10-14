@@ -13,7 +13,7 @@ There are four already implemented network builders yet:
 * DropoutDesaturate | Destroys a certain % of output (!) connections (amount is rounded). Not recommended.
 * DropoutLimited | For each node destroys some connections near or equal to selected dropout%
 
-Classes started with "Build" initializes both nodes and it's connections whereas classes started with "Dropout" alters only already built networks. Each NetworkBuilder is set up by it's constructor. Building is started with NetworkBuilder.build(n) method, where n is how many nodes to be in the network. Method build() returns the generated net hold by the class Host.
+Classes started with "Build" initializes both nodes and it's connections whereas classes started with "Dropout" alters only already built networks. Each NetworkBuilder is set up by it's constructor. Building is started with NetworkBuilder.build(n) method, where n is how many nodes to be in the network. Method build() returns the generated net hold by the class Bus.
 
 For instance, one can generate all-to-all graph with 10 nodes all connected to one another:
 
@@ -84,7 +84,7 @@ total_error <= goal_error it stops the generation process and passes back to bui
 from lib.NetworkBuilders.BuildParametricalGraph import BuildParametricalGraph
 
 goal = {2:0.2, 3:0.2, 4:0.6}
-# Will work right the same way as the output of Host.graph_statistics_dict()
+# Will work right the same way as the output of Bus.graph_statistics_dict()
 
 network_generator = BuildParametricalGraph(structure=goal, goal_error=1)
 #   One can't always generate the node completely identical to the parameters given.

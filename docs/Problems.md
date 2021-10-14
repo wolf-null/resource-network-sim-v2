@@ -26,7 +26,7 @@ Found the following solution. Far from being perfect, but still should work out:
 		1. Collect all *set()* operations from outside of the node and update the inner database
 		2. Collects all input signals from the input stack
 		3. "The exec() itself" - operate on node's database and prepare all output signals into the output stack.
-	2. **Return**. Send all set() operations done at the previous stage to the Host.
+	2. **Return**. Send all set() operations done at the previous stage to the Bus.
 		* node-executing process (**NXProc**) requests all those set queries from each of it's nodes
 		* NXProc sends those queries to the host-process (**HProc**) which holds the mirror database of all nodes. The latter exists to provide immediate get() operation for the processing stages (which runs separately and independently of NXProcs)
 		* NXProc also sends the output signals.
