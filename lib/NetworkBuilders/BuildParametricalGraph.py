@@ -4,7 +4,6 @@ from abc import abstractmethod
 from lib.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
 from lib.Host import Host
-from lib.Host import dict_sum, dict_by_number, dict_add_number
 import random as rnd
 from lib.Errors import GeneralError_WrongInput, HostError_CompletenessViolated, GeneralError_NotCallable
 import random as rnd
