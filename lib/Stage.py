@@ -1,14 +1,14 @@
-from lib.Host import Host
+from lib.Bus import Bus
 
 
 class Stage:
-    def __init__(self, host=Host(), name=str(), enabled=True):
+    def __init__(self, host=Bus(), name=str(), enabled=True):
         self._host = host
         self._enabled = enabled
         self.name = name
         self._terminal = None  # multiprocessing.connection
 
-    def set_host(self, host=Host()):
+    def set_host(self, host=Bus()):
         self._host = host
 
     def run(self):

@@ -14,12 +14,12 @@ import time
 import keyboard
 import multiprocessing as mlproc
 
-from lib.Hosts.MasterHost import MasterHost
+from lib.Hosts.MasterBus import MasterBus
 from lib.Nodes.HeartbeatNode import HeartbeatNode
 
-"""
+
 if __name__ == '__main__':
-    master = MasterHost(name='master')
+    master = MasterBus(name='master')
     node_Alice = HeartbeatNode(index='Alice', heartbeat_dst=['Bob', 'Charlie'])
     node_Bob = HeartbeatNode(index='Bob', heartbeat_dst=['Alice', 'Charlie'])
     node_Charlie = HeartbeatNode(index='Charlie', heartbeat_dst=['Alice', 'Bob'])
@@ -27,13 +27,4 @@ if __name__ == '__main__':
     master.join([[node_Alice, ], [node_Bob, node_Charlie]])
     master.run()
     master.exec()
-
-"""
-"""
-class Abase:
-    def __init__(self):
-        self.awoo = 'awoo'
-
-    def
-"""
 

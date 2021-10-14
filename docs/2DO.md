@@ -2,13 +2,13 @@
 
 ### Node
 
-* set and append methods of the node also invokes Host.push_set() and Host.push_append respectively, which pushes changes to into the host bus if any.
+* set and append methods of the node also invokes Bus.push_set() and Bus.push_append respectively, which pushes changes to into the host bus if any.
 
 
 
-### Host
+### Bus
 
-Previous version of Host was interacting with nodes (altering, adding, exec)  via node index. In multi-process app each host contains its own nodes, which are the parts of the whole network held by the RNS. This is why, from now one can't traverse nodes like
+Previous version of Bus was interacting with nodes (altering, adding, exec)  via node index. In multi-process app each host contains its own nodes, which are the parts of the whole network held by the RNS. This is why, from now one can't traverse nodes like
 
 ```python
 for node_index in range(self.size):
@@ -21,7 +21,7 @@ From the other hand, rewiring network builders and local stages will take a bunc
 
 Because in that case there is no need to re-index nodes in the host after splitting it so parallel hosts, and no need to re-index nodes at the master process when sending signals from one host to another. I see two ways of implementing this:
 
-* Still index nodes, but Host._nodes is now a dict, not the list.
+* Still index nodes, but Bus._nodes is now a dict, not the list.
 
 This requires some changes in traversing nodes, basically, not using range(self.size) and similar approaches.
 
@@ -48,7 +48,7 @@ But apply(), filter() and hist_values() are still needed features (for instance,
 Well, first one need to mention, that process hosts (unlike the master host) aren't expected to run Stages. [From the other hand, I see probability of such a horizontal relations between nodes, this is why I would like to implement 'p2p hosts' in later versions]. This is why, there is no need to implement these functions at process hosts [at least, for now]. 
 
 * Processing hosts doesn't run Stages, do it don't need consistent apply() and etc
-* There is no problem to extend the architecture up to MapReduce. Distribute inputs section of the Processing Host can not only split input signals to data alteration and signal stacking, but can also divert some packages and process it somehow (due to equity between all modules all this functions are always accessible for all processing hosts instances)
+* There is no problem to extend the architecture up to MapReduce. Distribute inputs section of the Processing Bus can not only split input signals to data alteration and signal stacking, but can also divert some packages and process it somehow (due to equity between all modules all this functions are always accessible for all processing hosts instances)
 
 Well, apply, filter and hist_values() interacts with Node._data only, which is mirrored. This is why, re-implementation will include rewriting these parts.
 

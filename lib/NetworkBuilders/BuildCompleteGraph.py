@@ -1,6 +1,6 @@
 from lib.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
-from lib.Host import Host
+from lib.Bus import Bus
 
 
 class BuildCompleteGraph(NetworkBuilder):

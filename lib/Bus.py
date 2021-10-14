@@ -2,10 +2,10 @@ from lib.Node import Node
 from lib.Errors import *
 
 
-class Host:
+class Bus:
     """
-    Host class implements basic node management functions like adding, connecting, connectivity check
-    Host class doesn't implement execution functions and other pipeline functional. For this see StageHost
+    Bus class implements basic node management functions like adding, connecting, connectivity check
+    Bus class doesn't implement execution functions and other pipeline functional. For this see StageHost
     """
     class IgnoreNoValues:
         pass
@@ -21,7 +21,7 @@ class Host:
         self._nodes.clear()
 
     def copy(self):
-        result = Host()
+        result = Bus()
         for node in self._nodes:
             new_node = node.copy()
             new_node.set_host(result)

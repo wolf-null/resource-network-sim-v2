@@ -1,5 +1,5 @@
 from lib.Stage import Stage
-from lib.Host import Host
+from lib.Bus import Bus
 import networkx
 import matplotlib.pyplot as plt
 
@@ -9,7 +9,7 @@ def default_color_rule(data):
 
 
 class StagePlotGraph(Stage):
-    def __init__(self, host=Host(), name=str(), enabled=True, axes=None, color_rule=default_color_rule, normalize=True, ground_normalize=True,
+    def __init__(self, host=Bus(), name=str(), enabled=True, axes=None, color_rule=default_color_rule, normalize=True, ground_normalize=True,
                  replot_on=1, bgcolor='white'):
         super(StagePlotGraph, self).__init__(host, name, enabled)
         self._host = host

@@ -1,5 +1,5 @@
 from lib.Stage import Stage
-from lib.Host import Host
+from lib.Bus import Bus
 from random import shuffle
 import threading
 
@@ -10,7 +10,7 @@ def pipeline_exec(nodes):
 
 
 class StageExecSync(Stage):
-    def __init__(self, host=Host(), name=str(), enabled=True, seek_color='color', number_of_substages=1):
+    def __init__(self, host=Bus(), name=str(), enabled=True, seek_color='color', number_of_substages=1):
         super(StageExecSync, self).__init__(name, enabled)
         self._first_start = True
         self._pipelines = list()

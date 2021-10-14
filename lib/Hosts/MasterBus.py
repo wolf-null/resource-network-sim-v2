@@ -1,7 +1,7 @@
 import random
 import time
 
-from lib.Host import Host
+from lib.Bus import Bus
 from lib.Node import Node
 from lib.Nodes.GhostNode import GhostNode
 from lib.Errors import HostError_NoSuchNode
@@ -11,12 +11,12 @@ from multiprocessing.synchronize import Event
 from multiprocessing.connection import PipeConnection
 from lib.Signals import Signal, DataSignal, HostSignal, HostTerminate, SignalSet, SignalAppend, HostWait
 from typing import Mapping, Any, Dict
-from lib.Hosts.ProcessingHost import ProcessingHost
+from lib.Hosts.ProcessingBus import ProcessingBus
 
 
-class MasterHost(Host):
+class MasterBus(Bus):
     def __init__(self, host_bus: PipeConnection = None, a_start_event: Event = None, a_end_event: Event = None, this_process : Process = None, name : str = str()):
-        super(MasterHost, self).__init__()
+        super(MasterBus, self).__init__()
         self._bus = host_bus
         self._a_start_event = a_start_event
         self._a_finish_event = a_end_event
@@ -31,7 +31,7 @@ class MasterHost(Host):
         self._processes = dict()  # type: Dict[str, multiprocessing.Process]
 
         # List of ProcessingHosts
-        self._process_hosts = dict()  # type: Dict[str, ProcessingHost]
+        self._process_hosts = dict()  # type: Dict[str, ProcessingBus]
 
         # Message routing
         # dst node -> dst host (where to send to)
@@ -54,7 +54,7 @@ class MasterHost(Host):
 
     def join(self, node_lists : list, host_names: list = None):
         # TODO: Check: Is join() can actually join a new host
-        # TODO: Check: Will join() add node to an existing Host if the hostname matches
+        # TODO: Check: Will join() add node to an existing Bus if the hostname matches
         if host_names is None:
             host_names = ["{0}.ProcHost_{1}".format(self.name, k) for k in range(len(node_lists))]
 
@@ -67,19 +67,16 @@ class MasterHost(Host):
             self._host_buses[new_host_name] = bus[0]
             self._output_buffers[new_host_name] = list()
 
-            # Initialize terminal bus (Pipe)
-            term = multiprocessing.Pipe()
-
             # Init a-start and a-finish events
             self._a_start_events[new_host_name] = multiprocessing.Event()
             self._a_finish_events[new_host_name] = multiprocessing.Event()
             self._a_finish_events[new_host_name].set()
 
-            # Init ProcessingHost class
-            host = ProcessingHost(bus[1], a_start_event=None,
-                                  a_end_event=None, name=new_host_name)
+            # Init ProcessingBus class
+            host = ProcessingBus(bus[1], a_start_event=None,
+                                 a_end_event=None, name=new_host_name)
 
-            proc = multiprocessing.Process(target=host.run, args=(bus[1], self._a_start_events[new_host_name], self._a_finish_events[new_host_name], term[1]))
+            proc = multiprocessing.Process(target=host.run, args=(bus[1], self._a_start_events[new_host_name], self._a_finish_events[new_host_name]))
 
             host.set_process(proc)
 
@@ -119,18 +116,18 @@ class MasterHost(Host):
         elif isinstance(signal, SignalAppend):
             self._alias[signal.dst].append(signal.key, signal.value, mirror=False)
         else:
-            print("[ProcessingHost|{0}]: No data instructions for signal {1}".format(self.name, type(signal)))
+            print("[ProcessingBus|{0}]: No data instructions for signal {1}".format(self.name, type(signal)))
 
     def process_host_signal(self, signal):
         """Signals for managing processing host itself"""
         if isinstance(signal, HostTerminate):
             # Terminate signal
-            print(str("[ProcessingHost|{0}]: Terminating...").format(self.name))
+            print(str("[ProcessingBus|{0}]: Terminating...").format(self.name))
             self._process.terminate()  # TODO: Shall be add at process creation by the Master host
         elif isinstance(signal, HostWait):
             time.sleep(signal.time())
         else:
-            print("[ProcessingHost|{0}]: No host instructions for signal {1}".format(self.name, type(signal)))
+            print("[ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal)))
 
     def distribute_inputs(self):
         while self._bus.poll():
@@ -141,7 +138,7 @@ class MasterHost(Host):
                     self.process_data_signal(signal)
                 else:
                     raise HostError_NoSuchNode('The node {0} is not here!'.format(dst))
-            elif isinstance(signal, HostSignal):    # Host-control signals
+            elif isinstance(signal, HostSignal):    # Bus-control signals
                 self.process_host_signal(signal)
             else:                                   # To-node signals
                 dst = signal.dst
@@ -152,7 +149,7 @@ class MasterHost(Host):
 
     def exec(self):
         while not self._terminate_request.is_set():
-            print('#{1} [MasterHost|{0}]: Start A-phase'.format(self.name, self.iteration))
+            print('#{1} [MasterBus|{0}]: Start A-phase'.format(self.name, self.iteration))
 
             # Start ProcessHosts:
             for key in self._process_hosts.keys():
@@ -166,20 +163,20 @@ class MasterHost(Host):
             for key in self._process_hosts.keys():
                 self._a_finish_events[key].wait()
 
-            print('#{1} [MasterHost|{0}]: End A-phase'.format(self.name, self.iteration))
+            print('#{1} [MasterBus|{0}]: End A-phase'.format(self.name, self.iteration))
 
             # Routing phase I: Clear buffer
             for key in self._output_buffers:
                 self._output_buffers[key].clear()
 
             # Routing phase II. Buffer input (and route)
-            print('#{0} [MasterHost|{1}]: Prerouting...'.format(self.iteration, self.name))
+            print('#{0} [MasterBus|{1}]: Prerouting...'.format(self.iteration, self.name))
             for key in self._host_buses:
                 bus = self._host_buses[key]
-                print('#{0} [MasterHost|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
+                print('#{0} [MasterBus|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
                 while bus.poll():
                     signal = bus.recv()
-                    print('#{0} [MasterHost|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
+                    print('#{0} [MasterBus|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
                     dst = signal.dst
                     if dst == self.name:
                         self.process_host_signal(signal)
@@ -195,7 +192,7 @@ class MasterHost(Host):
             for key in self._process_hosts.keys():
                 for msg in self._output_buffers[key]:
                     self._host_buses[key].send(msg)
-                    print('#{2} [MasterHost|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
+                    print('#{2} [MasterBus|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
 
             self.iteration += 1
 
@@ -211,14 +208,14 @@ class MasterHost(Host):
         # TODO: Thread lock?
 
     def run(self):
-        print("[MasterHost|{0}] Launching Processors ...".format(self.name))
+        print("[MasterBus|{0}] Launching Processors ...".format(self.name))
 
         try:
             for proc_host in self._process_hosts:
                 if not self._process_hosts[proc_host].get_process().is_alive():
                     self._processes[proc_host].start()
         except Exception:
-            print("[MasterHost|{0}] PANIC: Processor launching has interrupted!".format(self.name))
+            print("[MasterBus|{0}] PANIC: Processor launching has interrupted!".format(self.name))
         else:
-            print("[MasterHost|{0}] Hosts launched!".format(self.name))
+            print("[MasterBus|{0}] Hosts launched!".format(self.name))
 

@@ -1,7 +1,7 @@
 from lib.NewtorkBuilder import NetworkBuilder
 from random import choice
 from lib.Node import Node
-from lib.Host import Host
+from lib.Bus import Bus
 
 
 class ColoringFaster(NetworkBuilder):

@@ -1,4 +1,4 @@
-from lib.Host import Host
+from lib.Bus import Bus
 from abc import ABC, abstractmethod
 
 
@@ -9,11 +9,11 @@ class NetworkBuilder:
 
     def __init__(self, previous=None):
         self._previous_builder = previous
-        self._host = Host()
+        self._host = Bus()
 
     def build(self, param):
         # An ugly solution for generalization of build() usage:
-        if isinstance(param, Host):
+        if isinstance(param, Bus):
             self._host = param
 
         if isinstance(self._previous_builder, NetworkBuilder):
