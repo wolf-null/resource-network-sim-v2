@@ -14,9 +14,9 @@ from typing import Mapping, Any, Dict
 from lib.Hosts.ProcessingBus import ProcessingBus
 
 
-class MasterBus(Bus):
+class RootBus(Bus):
     def __init__(self, host_bus: PipeConnection = None, a_start_event: Event = None, a_end_event: Event = None, this_process : Process = None, name : str = str()):
-        super(MasterBus, self).__init__()
+        super(RootBus, self).__init__()
         self._bus = host_bus
         self._a_start_event = a_start_event
         self._a_finish_event = a_end_event
@@ -149,7 +149,7 @@ class MasterBus(Bus):
 
     def exec(self):
         while not self._terminate_request.is_set():
-            print('#{1} [MasterBus|{0}]: Start A-phase'.format(self.name, self.iteration))
+            print('#{1} [RootBus|{0}]: Start A-phase'.format(self.name, self.iteration))
 
             # Start ProcessHosts:
             for key in self._process_hosts.keys():
@@ -163,20 +163,20 @@ class MasterBus(Bus):
             for key in self._process_hosts.keys():
                 self._a_finish_events[key].wait()
 
-            print('#{1} [MasterBus|{0}]: End A-phase'.format(self.name, self.iteration))
+            print('#{1} [RootBus|{0}]: End A-phase'.format(self.name, self.iteration))
 
             # Routing phase I: Clear buffer
             for key in self._output_buffers:
                 self._output_buffers[key].clear()
 
             # Routing phase II. Buffer input (and route)
-            print('#{0} [MasterBus|{1}]: Prerouting...'.format(self.iteration, self.name))
+            print('#{0} [RootBus|{1}]: Prerouting...'.format(self.iteration, self.name))
             for key in self._host_buses:
                 bus = self._host_buses[key]
-                print('#{0} [MasterBus|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
+                print('#{0} [RootBus|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
                 while bus.poll():
                     signal = bus.recv()
-                    print('#{0} [MasterBus|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
+                    print('#{0} [RootBus|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
                     dst = signal.dst
                     if dst == self.name:
                         self.process_host_signal(signal)
@@ -192,7 +192,7 @@ class MasterBus(Bus):
             for key in self._process_hosts.keys():
                 for msg in self._output_buffers[key]:
                     self._host_buses[key].send(msg)
-                    print('#{2} [MasterBus|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
+                    print('#{2} [RootBus|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
 
             self.iteration += 1
 
@@ -208,14 +208,14 @@ class MasterBus(Bus):
         # TODO: Thread lock?
 
     def run(self):
-        print("[MasterBus|{0}] Launching Processors ...".format(self.name))
+        print("[RootBus|{0}] Launching Processors ...".format(self.name))
 
         try:
             for proc_host in self._process_hosts:
                 if not self._process_hosts[proc_host].get_process().is_alive():
                     self._processes[proc_host].start()
         except Exception:
-            print("[MasterBus|{0}] PANIC: Processor launching has interrupted!".format(self.name))
+            print("[RootBus|{0}] PANIC: Processor launching has interrupted!".format(self.name))
         else:
-            print("[MasterBus|{0}] Hosts launched!".format(self.name))
+            print("[RootBus|{0}] Hosts launched!".format(self.name))
 
