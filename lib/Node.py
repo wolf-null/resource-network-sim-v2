@@ -11,7 +11,6 @@ class Node:
 
         self._host = None
         self._data_write_stack = list()
-        self._idle_mode = False
 
     def get(self, key, default_value=None):
         """
@@ -142,9 +141,6 @@ class Node:
 
     def send_signal(self, dst, amount):
         self._host.send_signal_to(self, dst, amount)
-
-    def is_idle(self):
-        return self._idle_mode
 
     def exec(self):
         """
