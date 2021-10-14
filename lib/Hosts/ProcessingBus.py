@@ -39,10 +39,21 @@ class ProcessingBus(Bus):
         self._process = process
 
     def update_alias(self):
+        """
+        Traverse own nodes and adds an index alias to those nodes
+        Also seeks for node[alias] if set and adds these too
+        :return:
+        """
         for node in self._nodes:
             if node.index not in self._alias:
                 self._alias[node.index] = node
-        print('[ProcessingBus|{0}]: Alias {1}'.format(self.name, self._alias))
+
+                # If the node provide it's own pseudonymous it will be also added to alias list:
+                if 'alias' in node:
+                    aliases = node.get('pseudonymous')
+                    for alias in aliases:
+                        self._alias[alias] = node
+        self.print('[ProcessingBus|{0}]: Alias {1}'.format(self.name, self._alias))
 
     def belongs_here(self, index):
         return index in self._alias
@@ -54,19 +65,19 @@ class ProcessingBus(Bus):
         elif isinstance(signal, SignalAppend):
             self._alias[signal.dst].append(signal.key(), signal.value(), mirror=False)
         else:
-            print("#{2} [ProcessingBus|{0}]: No data instructions for signal {1}".format(self.name, type(signal), self.iteration))
+            self.print("#{2} [ProcessingBus|{0}]: No data instructions for signal {1}".format(self.name, type(signal), self.iteration))
 
     def process_host_signal(self, signal):
         """Signals for managing processing host itself"""
         if isinstance(signal, HostTerminate):
             # Terminate signal
-            print(str("[ProcessingBus|{0}]: Terminating...").format(self.name))
+            self.print(str("[ProcessingBus|{0}]: Terminating...").format(self.name))
             self._process.terminate()  # TODO: Shall be add at process creation by the Master host
             self._put_on_termination = True
         elif isinstance(signal, HostWait):
             time.sleep(signal.time())
         else:
-            print("#{2} [ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal), self.iteration))
+            self.print("#{2} [ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal), self.iteration))
 
     def distribute_inputs(self):
         while not self._local_buffer.empty():
@@ -92,17 +103,17 @@ class ProcessingBus(Bus):
                     raise HostError_NoSuchNode('The node {0} is not here!'.format(dst))
 
     def exec(self):
-        print("#{1} [ProcessingBus|{0}]: Wait for A-phase".format(self.name, self.iteration))
+        self.print("#{1} [ProcessingBus|{0}]: Wait for A-phase".format(self.name, self.iteration))
         self._a_start_event.wait()
         self._a_start_event.clear()
-        print("#{1} [ProcessingBus|{0}]: A-phase started".format(self.name, self.iteration))
+        self.print("#{1} [ProcessingBus|{0}]: A-phase started".format(self.name, self.iteration))
         self.distribute_inputs()
         exec_order = list(range(len(self._nodes))) # [node.index for node in self._nodes]
         shuffle(exec_order)
         for node_index in exec_order:   # TODO: Shuffling exec() order
             self.get_node(node_index).exec()
         self._a_finish_event.set()
-        print("#{1} [ProcessingBus|{0}]: A-phase end".format(self.name, self.iteration))
+        self.print("#{1} [ProcessingBus|{0}]: A-phase end".format(self.name, self.iteration))
         self.iteration += 1
         # MAN: Nodes pushes signals directly to the bus via Node._host.emit()
         # MAN: ... The node is linked to the host via Node._host
@@ -111,14 +122,14 @@ class ProcessingBus(Bus):
 
     def emit(self, signal: Signal):
         if not self.belongs_here(signal.dst) or isinstance(signal, DataSignal):
-            print("#{0} [ProcessingBus|{1}]: Emit signal {2} to master host".format(self.iteration, self.name, signal))
+            self.print("#{0} [ProcessingBus|{1}]: Emit signal {2} to master host".format(self.iteration, self.name, signal))
             self._bus.send(signal)
         elif self.belongs_here(signal.dst):
             self._local_buffer.put(signal)
         # If not - it will be read at next distribute_inputs()
 
     def run(self, bus, stev, finev):
-        print("[ProcessingBus|{0}]: Run the process".format(self.name))
+        self.print("[ProcessingBus|{0}]: Run the process".format(self.name))
         self._local_buffer = Queue()
         self._a_start_event = stev
         self._a_finish_event = finev
