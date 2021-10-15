@@ -80,11 +80,13 @@ class ProcessingBus(Bus):
             self.print("#{2} [ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal), self.iteration))
 
     def distribute_inputs(self):
+        # Re-emit signals from local nodes to destination local nodes
         while not self._local_buffer.empty():
             signal = self._local_buffer.get()
             dst = signal.dst
             self._alias[dst].emit(signal)
 
+        # Receive input signals from the primary bus, process or re-emit if necessary
         while self._bus.poll():
             signal = self._bus.recv()
             if isinstance(signal, DataSignal):      # Data-signals
