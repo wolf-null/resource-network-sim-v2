@@ -49,8 +49,6 @@ class MainBus(Bus):
         # Output signal buffers host_name --> list <signal>
         self._output_buffers = dict()  # type: Dict[str, list]
 
-        # Number of exec() full stages passed
-        self.iteration = 0
 
     def join(self, node_lists : list, host_names: list = None):
         # TODO: Check: Is join() can actually join a new host
@@ -116,18 +114,18 @@ class MainBus(Bus):
         elif isinstance(signal, SignalAppend):
             self._alias[signal.dst].append(signal.key, signal.value, mirror=False)
         else:
-            print("[ProcessingBus|{0}]: No data instructions for signal {1}".format(self.name, type(signal)))
+            self.print("No data instructions for signal {0}".format(type(signal)))
 
     def process_host_signal(self, signal):
         """Signals for managing processing host itself"""
         if isinstance(signal, HostTerminate):
             # Terminate signal
-            print(str("[ProcessingBus|{0}]: Terminating...").format(self.name))
+            self.print("Terminating...")
             self._process.terminate()  # TODO: Shall be add at process creation by the Master host
         elif isinstance(signal, HostWait):
             time.sleep(signal.time())
         else:
-            print("[ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal)))
+            self.print("No host instructions for signal {0}".format(type(signal)))
 
     def distribute_inputs(self):
         while self._bus.poll():
@@ -149,7 +147,7 @@ class MainBus(Bus):
 
     def exec(self):
         while not self._terminate_request.is_set():
-            print('#{1} [MainBus|{0}]: Start A-phase'.format(self.name, self.iteration))
+            self.print('Start A-phase')
 
             # Start ProcessHosts:
             for key in self._process_hosts.keys():
@@ -163,20 +161,20 @@ class MainBus(Bus):
             for key in self._process_hosts.keys():
                 self._a_finish_events[key].wait()
 
-            print('#{1} [MainBus|{0}]: End A-phase'.format(self.name, self.iteration))
+            self.print('[MainBus|{0}]: End A-phase'.format(self.name))
 
             # Routing phase I: Clear buffer
             for key in self._output_buffers:
                 self._output_buffers[key].clear()
 
             # Routing phase II. Buffer input (and route)
-            print('#{0} [MainBus|{1}]: Prerouting...'.format(self.iteration, self.name))
+            self.print('Prerouting...')
             for key in self._host_buses:
                 bus = self._host_buses[key]
-                print('#{0} [MainBus|{1}]: Prerouting bus {2}. Has elements: {3}'.format(self.iteration, self.name, bus, bus.poll()))
+                self.print('Prerouting bus {0}. Has elements: {1}'.format(bus, bus.poll()))
                 while bus.poll():
                     signal = bus.recv()
-                    print('#{0} [MainBus|{1}]: Prerouting signal {2}'.format(self.iteration, self.name, signal))
+                    self.print('Prerouting signal {0}'.format(signal))
                     dst = signal.dst
                     if dst == self.name:
                         self.process_host_signal(signal)
@@ -192,12 +190,12 @@ class MainBus(Bus):
             for key in self._process_hosts.keys():
                 for msg in self._output_buffers[key]:
                     self._host_buses[key].send(msg)
-                    print('#{2} [MainBus|{0}]: Send signal {1}'.format(self.name, msg, self.iteration))
+                    self.print('Send signal {0}'.format(msg))
 
             self.iteration += 1
 
             for key in self._alias:
-                print("{0}'s counter = {1}".format(key, self._alias[key].get('exec_counter')))
+                self.print("{0}'s counter = {1}".format(key, self._alias[key].get('exec_counter')))
 
         # When _terminate_request event is set, execution cycle ends and Master sends termination signals to hosts:
         for host in self._process_hosts.values():
@@ -208,14 +206,14 @@ class MainBus(Bus):
         # TODO: Thread lock?
 
     def run(self):
-        print("[MainBus|{0}] Launching Processors ...".format(self.name))
+        self.print("Launching Processors ...")
 
         try:
             for proc_host in self._process_hosts:
                 if not self._process_hosts[proc_host].get_process().is_alive():
                     self._processes[proc_host].start()
         except Exception:
-            print("[MainBus|{0}] PANIC: Processor launching has interrupted!".format(self.name))
+            self.print("PANIC: Processor launching has interrupted!")
         else:
-            print("[MainBus|{0}] Hosts launched!".format(self.name))
+            self.print("Hosts launched!")
 

@@ -26,11 +26,7 @@ class ProcessingBus(Bus):
             name = str(randint(0, 65535))
         self.name = name
         self._put_on_termination = False
-        self.iteration = 0
         self._local_buffer = None  # multiprocessing.Queue
-
-    def print(self, *args):
-        print(*args)
 
     def get_process(self):
         return self._process
@@ -53,7 +49,7 @@ class ProcessingBus(Bus):
                     aliases = node.get('pseudonymous')
                     for alias in aliases:
                         self._alias[alias] = node
-        self.print('[ProcessingBus|{0}]: Alias {1}'.format(self.name, self._alias))
+        self.print('Alias {0}'.format(self._alias))
 
     def belongs_here(self, index):
         return index in self._alias
@@ -65,19 +61,19 @@ class ProcessingBus(Bus):
         elif isinstance(signal, SignalAppend):
             self._alias[signal.dst].append(signal.key(), signal.value(), mirror=False)
         else:
-            self.print("#{2} [ProcessingBus|{0}]: No data instructions for signal {1}".format(self.name, type(signal), self.iteration))
+            self.print("No data instructions for signal {0}".format(type(signal)))
 
     def process_host_signal(self, signal):
         """Signals for managing processing host itself"""
         if isinstance(signal, HostTerminate):
             # Terminate signal
-            self.print(str("[ProcessingBus|{0}]: Terminating...").format(self.name))
+            self.print("Terminating...")
             self._process.terminate()  # TODO: Shall be add at process creation by the Master host
             self._put_on_termination = True
         elif isinstance(signal, HostWait):
             time.sleep(signal.time())
         else:
-            self.print("#{2} [ProcessingBus|{0}]: No host instructions for signal {1}".format(self.name, type(signal), self.iteration))
+            self.print("No host instructions for signal {0}".format(type(signal)))
 
     def distribute_inputs(self):
         # Re-emit signals from local nodes to destination local nodes
@@ -105,17 +101,17 @@ class ProcessingBus(Bus):
                     raise HostError_NoSuchNode('The node {0} is not here!'.format(dst))
 
     def exec(self):
-        self.print("#{1} [ProcessingBus|{0}]: Wait for A-phase".format(self.name, self.iteration))
+        self.print("Wait for A-phase")
         self._a_start_event.wait()
         self._a_start_event.clear()
-        self.print("#{1} [ProcessingBus|{0}]: A-phase started".format(self.name, self.iteration))
+        self.print("A-phase started")
         self.distribute_inputs()
         exec_order = list(range(len(self._nodes))) # [node.index for node in self._nodes]
         shuffle(exec_order)
         for node_index in exec_order:   # TODO: Shuffling exec() order
             self.get_node(node_index).exec()
         self._a_finish_event.set()
-        self.print("#{1} [ProcessingBus|{0}]: A-phase end".format(self.name, self.iteration))
+        self.print("A-phase end")
         self.iteration += 1
         # MAN: Nodes pushes signals directly to the bus via Node._host.emit()
         # MAN: ... The node is linked to the host via Node._host
@@ -124,14 +120,14 @@ class ProcessingBus(Bus):
 
     def emit(self, signal: Signal):
         if not self.belongs_here(signal.dst) or isinstance(signal, DataSignal):
-            self.print("#{0} [ProcessingBus|{1}]: Emit signal {2} to master host".format(self.iteration, self.name, signal))
+            self.print("Emit signal {0} to master host".format(signal))
             self._bus.send(signal)
         elif self.belongs_here(signal.dst):
             self._local_buffer.put(signal)
         # If not - it will be read at next distribute_inputs()
 
     def run(self, bus, stev, finev):
-        self.print("[ProcessingBus|{0}]: Run the process".format(self.name))
+        self.print("Run the process")
         self._local_buffer = Queue()
         self._a_start_event = stev
         self._a_finish_event = finev

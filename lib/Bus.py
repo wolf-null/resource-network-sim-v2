@@ -15,6 +15,8 @@ class Bus:
         self._nodes = list()  # List[Node]
         self._rising_connection_errors = True
         self._global_data = list()
+        self.iteration = 0
+        self.name = ''
 
     def reset_nodes(self):
         self.size = 0
@@ -118,10 +120,10 @@ class Bus:
 
     def print_data(self):
         for node in self._nodes:
-            print("Node: ", node.index, " :")
-            print("Connections : ", node.connections())
-            print("Rev. connections : ", node.reverse_connections())
-            print()
+            self.print("Node: ", node.index, " :")
+            self.print("Connections : ", node.connections())
+            self.print("Rev. connections : ", node.reverse_connections())
+            self.print()
 
     def graph_statistics_dict(self):
         stats = dict()
@@ -195,3 +197,6 @@ class Bus:
 
     def apply_get_set(self, func):
         return [node.apply_get_set(func) for node in self._nodes]
+
+    def print(self, *args):
+        print("<{0}> [{1}|{2}]:".format(self.iteration, type(self).__name__, self.name), *args)
