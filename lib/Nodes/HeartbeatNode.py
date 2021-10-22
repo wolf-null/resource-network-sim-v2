@@ -16,27 +16,28 @@ class HeartbeatNode(GhostNode):
         self.set('exec_counter', 0)
 
     def exec(self):
-        self._host.print("exec")
-        print("[HeartbeatNode|{0}]: Exec!".format(self.index))
+        self.print("Exec!")
 
         signals_got = self.pop_signal()
         for signal in signals_got:
-            print("[HeartbeatNode|{0}] Received signal {1}".format(self.index, signal))
+            self.print("Received signal {0}".format(signal))
 
-        print("[HeartbeatNode|{0}]: Signals received! Now sleep!".format(self.index))
+        self.print("Signals received! Now sleep!")
 
         bench = [rnd.random() for k in range(1000000)]
         rnd.shuffle(bench)
         for k in range(len(bench)-1):
             bench[k+1] = bench[k] * bench[k+1]
-        print("[HeartbeatNode|{0}]: Sum = {1}".format(self.index, sum(bench)))
+        self.print("Sum = {0}".format(sum(bench)))
 
-        print("[HeartbeatNode|{0}]: Awake after sleep".format(self.index))
+        self.print("Awake after sleep")
 
         for send_to in self.get('heartbeat_dst'):
             sig = SignalIsAlive(src=self.index, dst=send_to)
-            print("[HeartbeatNode|{0}]: send signal {1}".format(self.index, sig))
+            self.print("send signal {0}".format(sig))
             self._host.emit(sig)
 
         self.set('exec_counter', self.get('exec_counter') + 1)
-        print("[HeartbeatNode|{0}]: exec() end".format(self.index))
+        self.print("exec() end")
+
+        self.iteration += 1

@@ -12,6 +12,8 @@ class Node:
         self._host = None
         self._data_write_stack = list()
 
+        self.iteration = 0
+
     def get(self, key, default_value=None):
         """
         :return: the value associated with :param key: if it exists, in other case returns :param default_value:
@@ -154,4 +156,7 @@ class Node:
         Launched after the end of the stage
         """
         pass
+
+    def print(self, *args):
+        print("<{0}> [{1}|{2}]:".format(self.iteration, type(self).__name__, self.index), *args)
 

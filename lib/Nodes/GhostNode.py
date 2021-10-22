@@ -39,6 +39,6 @@ class GhostNode(Node):
                                      'Use disconnect_from(<node_index>) instead'.format(node))
 
     def exec(self):
-        print("[GhostNode|{0}]: exec()".format(self.index))
+        self.print("[GhostNode|{0}]: exec()".format(self.index))
 
     # TODO: Decorate all connection/disconnection routines with connection messages back to host
