@@ -3,7 +3,7 @@ import time
 
 from lib.Bus import Bus
 from lib.Node import Node
-from lib.Nodes.GhostNode import GhostNode
+from lib.Nodes.CommittedNode import CommittedNode
 from lib.Errors import HostError_NoSuchNode
 import multiprocessing
 from multiprocessing import Process
@@ -20,7 +20,7 @@ class MainBus(Bus):
         self._bus = host_bus
         self._a_start_event = a_start_event
         self._a_finish_event = a_end_event
-        self._alias = dict()  # type:  Dict[Any, GhostNode]
+        self._alias = dict()  # type:  Dict[Any, CommittedNode]
         self._process = this_process
         if len(name) == 0:
             name = str(random.randint(0, 65535))
@@ -93,7 +93,7 @@ class MainBus(Bus):
                 # Add a mirror node to master. Mirror node is not added to routing
                 # since it doesn't expected to intercept messages
                 # (except data, which is processed by process_data_signal)
-                ghost = node.copy(dst=GhostNode())
+                ghost = node.copy(dst=CommittedNode())
                 self.add_node(ghost, override_index=False)
 
             host.update_alias()
@@ -217,3 +217,16 @@ class MainBus(Bus):
         else:
             self.print("Hosts launched!")
 
+
+if __name__ == '__main__':
+    print("MainBus testing!")
+    from lib.Nodes.HeartbeatNode import HeartbeatNode
+
+    master = MainBus(name='master')
+    node_Alice = HeartbeatNode(index='Alice', heartbeat_dst=['Bob', 'Charlie'])
+    node_Bob = HeartbeatNode(index='Bob', heartbeat_dst=['Alice', 'Charlie'])
+    node_Charlie = HeartbeatNode(index='Charlie', heartbeat_dst=['Alice', 'Bob'])
+
+    master.join([[node_Alice, ], [node_Bob, node_Charlie]])
+    master.run()
+    master.exec()

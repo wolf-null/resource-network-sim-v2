@@ -3,7 +3,7 @@ import time
 
 from lib.Bus import Bus
 from lib.Node import Node
-from lib.Nodes.GhostNode import GhostNode
+from lib.Nodes.CommittedNode import CommittedNode
 from lib.Errors import HostError_NoSuchNode
 import multiprocessing
 from multiprocessing import Process
@@ -20,7 +20,7 @@ class ProcessingBus(Bus):
         self._bus = host_bus
         self._a_start_event = a_start_event
         self._a_finish_event = a_end_event
-        self._alias = dict()  # type:  Dict[Any, GhostNode]
+        self._alias = dict()  # type:  Dict[Any, CommittedNode]
         self._process = None
         if len(name) == 0:
             name = str(randint(0, 65535))

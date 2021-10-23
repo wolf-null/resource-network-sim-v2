@@ -1,6 +1,5 @@
-from lib.NewtorkBuilder import NetworkBuilder
+from utils.NewtorkBuilder import NetworkBuilder
 from lib.Node import Node
-from lib.Bus import Bus
 
 
 class BuildGridGraph(NetworkBuilder):

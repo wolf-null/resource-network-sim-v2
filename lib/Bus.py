@@ -14,7 +14,6 @@ class Bus:
         self.size = 0
         self._nodes = list()  # List[Node]
         self._rising_connection_errors = True
-        self._global_data = list()
         self.iteration = 0
         self.name = ''
 

@@ -1,4 +1,4 @@
-from lib.Node import Node
+from lib.Nodes.CommittedNode import CommittedNode
 from random import choice, randint, random
 
 
@@ -16,13 +16,13 @@ class ReverseTransaction(Transaction):
         self.amount = amount
 
 
-class SimpleNodeIndirected(Node):
+class SimpleNodeIndirected(CommittedNode):
     def __init__(self, index = -1, initial_wealth=0, **kwargs):
         super(SimpleNodeIndirected, self).__init__(index, initial_wealth, **kwargs)
         if 'max_transaction' in kwargs:
-            self._data['max_transaction'] = kwargs['max_transaction']
+            self._state['max_transaction'] = kwargs['max_transaction']
         else:
-            self._data['max_transaction'] = 1
+            self._state['max_transaction'] = 1
 
         self.delayed_outcome = 0
         self.remember()
@@ -34,7 +34,7 @@ class SimpleNodeIndirected(Node):
         self.append('wealth_history', self.get('wealth'))
 
     def exec(self):
-        my_input_buffer = self.pop_signal_stack()
+        my_input_buffer = self.pop_signals()
         self.set('wealth', self.get('wealth') - self.delayed_outcome)
 
         total_income = 0

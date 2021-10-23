@@ -1,13 +1,17 @@
-from lib.Nodes.GhostNode import GhostNode
+from lib.Nodes.CommittedNode import CommittedNode
 from lib.Signals import SignalIsAlive
-import time
 import random as rnd
 
-class HeartbeatNode(GhostNode):
-    class Broadcast:
-        pass
+
+class HeartbeatNode(CommittedNode):
+    """
+    Sends IsAliveSignal to all nodes listed in the heartbeat_dst at the exec()
+    """
 
     def __init__(self, **kwargs):
+        """
+        :param heartbeat_dst: list <str> - a list of nodes to which IsAliveSignal to be sent at the exec()
+        """
         super(HeartbeatNode, self).__init__(**kwargs)
         if 'heartbeat_dst' in kwargs:
             self.set('heartbeat_dst', kwargs['heartbeat_dst'], mirror=False)
@@ -18,19 +22,9 @@ class HeartbeatNode(GhostNode):
     def exec(self):
         self.print("Exec!")
 
-        signals_got = self.pop_signal()
+        signals_got = self.pop_signals()
         for signal in signals_got:
             self.print("Received signal {0}".format(signal))
-
-        self.print("Signals received! Now sleep!")
-
-        bench = [rnd.random() for k in range(1000000)]
-        rnd.shuffle(bench)
-        for k in range(len(bench)-1):
-            bench[k+1] = bench[k] * bench[k+1]
-        self.print("Sum = {0}".format(sum(bench)))
-
-        self.print("Awake after sleep")
 
         for send_to in self.get('heartbeat_dst'):
             sig = SignalIsAlive(src=self.index, dst=send_to)

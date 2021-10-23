@@ -1,16 +1,18 @@
-#import threading
+from typing import Any, Dict, AnyStr
+from lib.Signals import Signal
 
 
 class Node:
-    def __init__(self, index=-1, initial_wealth=0, **kwargs):
+    def __init__(self, index=-1, **kwargs):
         self.index = index
         self.__connections = list()
         self.__reverse_connections = list()
-        self.my_input_buffer = list()
-        self._data = {'wealth': initial_wealth}
+        self.input_buffer = list()
+
+        # All **kwagrs will be interpreted as the initial state
+        self._state = kwargs  # type: Dict[AnyStr, Any]
 
         self._host = None
-        self._data_write_stack = list()
 
         self.iteration = 0
 
@@ -19,24 +21,24 @@ class Node:
         :return: the value associated with :param key: if it exists, in other case returns :param default_value:
         The latter ability allows to use get as
         """
-        if key in self._data:
-            return self._data[key]
+        if key in self._state:
+            return self._state[key]
         return default_value
 
     def set(self, key, value):
-        self._data[key] = value
+        self._state[key] = value
 
     def append(self, key, value):
-        self._data[key].append(value)
+        self._state[key].append(value)
 
     def apply(self, func):
-        return func(self._data)
+        return func(self._state)
 
     def apply_get_set(self, func):
         return func(lambda var, dfv: self.get(var, dfv), lambda var, val: self.set(var, val))
 
     def __contains__(self, item):
-        return item in self._data
+        return item in self._state
 
     def copy(self, dst=None):
         # TODO: Such a behavior below might be counterintuitive. Refactor?
@@ -46,8 +48,8 @@ class Node:
             result = dst
         result.__connections = self.__connections.copy()
         result.__reverse_connections = self.__reverse_connections.copy()
-        result.my_input_buffer = self.my_input_buffer.copy()
-        result._data = self._data.copy()
+        result.input_buffer = self.input_buffer.copy()
+        result._state = self._state.copy()
         result.index = self.index
         return result
 
@@ -130,15 +132,15 @@ class Node:
         while not node.push_signal(...):
             pass
         """
-        self.my_input_buffer.append((src, dst, amount))
+        self.input_buffer.append((src, dst, amount))
         return True
 
-    def pop_signal_stack(self, number_or_records=-1):
+    def pop_signals(self, number_or_records=-1):
         if number_or_records != -1:
-            result = self.my_input_buffer[0:number_or_records]
+            result = self.input_buffer[0:number_or_records]
         else:
-            result = self.my_input_buffer.copy()
-        self.my_input_buffer = self.my_input_buffer[number_or_records:-1]
+            result = self.input_buffer.copy()
+        self.input_buffer = self.input_buffer[number_or_records:-1]
         return result
 
     def send_signal(self, dst, amount):
@@ -147,16 +149,17 @@ class Node:
     def exec(self):
         """
         The way of cleaning input stack is also determined by inheritors
-        Use pop_signal_stack when exec() starts and
-        """
-        pass
-
-    def post_exec(self):
-        """
-        Launched after the end of the stage
+        Use pop_signals when exec() starts and
         """
         pass
 
     def print(self, *args):
         print("<{0}> [{1}|{2}]:".format(self.iteration, type(self).__name__, self.index), *args)
 
+
+    def emit(self, signal=Signal()):
+        self.input_buffer.append(signal)
+
+    def emit_to_host(self, signal=Signal()):
+        if self._host is not None:
+            self._host.emit(signal)

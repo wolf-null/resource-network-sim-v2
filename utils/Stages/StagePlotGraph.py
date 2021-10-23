@@ -1,4 +1,4 @@
-from lib.Stage import Stage
+from utils.Stage import Stage
 from lib.Bus import Bus
 import networkx
 import matplotlib.pyplot as plt
